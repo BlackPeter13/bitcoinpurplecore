@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ###############################################################################
 # Quick Build Script for BitcoinPurple Core
@@ -6,6 +6,7 @@
 # With ccache support for faster rebuilds
 ###############################################################################
 
+export LC_ALL=C
 set -e  # Exit on error
 
 # Colors for output

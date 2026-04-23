@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ###############################################################################
 # BitcoinPurple Core - Windows x64 Docker Build Wrapper
 ###############################################################################
 
+export LC_ALL=C
 set -e
 
 # Colors
