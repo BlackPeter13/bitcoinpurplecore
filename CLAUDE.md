@@ -23,7 +23,7 @@ All soft-forks (SegWit, Taproot, CSV, BIP34/65/66) active from genesis height 0.
 ./quick_build.sh --rebuild
 ```
 
-Manual Autotools path — see [doc/build-unix.md](doc/build-unix.md).  
+Manual Autotools path — see [doc/build-unix.md](doc/build-unix.md).
 Reproducible multi-arch releases: `./docker-build/build-all.sh` (linux-x86_64, aarch64, armv7, windows-x64).
 
 ## Executables
