@@ -1531,10 +1531,10 @@ class TaprootTest(BitcoinPurpleTestFramework):
         coinbase = CTransaction()
         coinbase.nVersion = 1
         coinbase.vin = [CTxIn(COutPoint(0, 0xffffffff), CScript([OP_1, OP_1]), SEQUENCE_FINAL)]
-        coinbase.vout = [CTxOut(5000000000, CScript([OP_1]))]
+        coinbase.vout = [CTxOut(100000000, CScript([OP_1]))]
         coinbase.nLockTime = 0
         coinbase.rehash()
-        assert coinbase.hash == "f60c73405d499a956d3162e3483c395526ef78286458a4cb17b125aa92e49b20"
+        assert coinbase.hash == "0cfb2c7508563af055501a76e5cdfa797bfb7bd73b2f8bdc3c25eb4cbaf0b78b"
         # Mine it
         block = create_block(hashprev=int(self.nodes[0].getbestblockhash(), 16), coinbase=coinbase)
         block.rehash()
@@ -1617,9 +1617,9 @@ class TaprootTest(BitcoinPurpleTestFramework):
         # come from distinct txids).
         txn = []
         lasttxid = coinbase.sha256
-        amount = 5000000000
+        amount = 100000000
         for i, spk in enumerate(old_spks + tap_spks):
-            val = 42000000 * (i + 7)
+            val = 840000 * (i + 7)
             tx = CTransaction()
             tx.nVersion = 1
             tx.vin = [CTxIn(COutPoint(lasttxid, i & 1), CScript([]), SEQUENCE_FINAL)]
