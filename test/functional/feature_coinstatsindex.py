@@ -112,14 +112,14 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
         for hash_option in index_hash_options:
             # Genesis block is unspendable
             res4 = index_node.gettxoutsetinfo(hash_option, 0)
-            assert_equal(res4['total_unspendable_amount'], 50)
+            assert_equal(res4['total_unspendable_amount'], 1)
             assert_equal(res4['block_info'], {
-                'unspendable': 50,
+                'unspendable': 1,
                 'prevout_spent': 0,
                 'new_outputs_ex_coinbase': 0,
                 'coinbase': 0,
                 'unspendables': {
-                    'genesis_block': 50,
+                    'genesis_block': 1,
                     'bip30': 0,
                     'scripts': 0,
                     'unclaimed_rewards': 0
@@ -129,12 +129,12 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
 
             # Test an older block height that included a normal tx
             res5 = index_node.gettxoutsetinfo(hash_option, 102)
-            assert_equal(res5['total_unspendable_amount'], 50)
+            assert_equal(res5['total_unspendable_amount'], 1)
             assert_equal(res5['block_info'], {
                 'unspendable': 0,
-                'prevout_spent': 50,
-                'new_outputs_ex_coinbase': Decimal('49.99968800'),
-                'coinbase': Decimal('50.00031200'),
+                'prevout_spent': 1,
+                'new_outputs_ex_coinbase': Decimal('0.99968800'),
+                'coinbase': Decimal('1.00031200'),
                 'unspendables': {
                     'genesis_block': 0,
                     'bip30': 0,
