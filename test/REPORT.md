@@ -45,7 +45,9 @@ BerkeleyDB 4.8 is not available in the official Ubuntu 24.04 repositories and mu
 wget https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
 tar xzf db-4.8.30.NC.tar.gz
 cd db-4.8.30.NC/build_unix
-../dist/configure --enable-cxx --disable-shared --with-pic --prefix=/usr/local
+# On aarch64 (e.g. Raspberry Pi 5) the bundled config.guess (2009) cannot detect
+# the architecture — pass --build explicitly:
+../dist/configure --build=aarch64-unknown-linux-gnu --enable-cxx --disable-shared --with-pic --prefix=/usr/local
 # fix conflict with modern GCC
 sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' ../dbinc/atomic.h
 make -j$(nproc)
