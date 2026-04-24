@@ -195,19 +195,19 @@ public:
         consensus.signet_blocks = false;
         consensus.signet_challenge.clear();
         consensus.nSubsidyHalvingInterval = 500000;
-        consensus.BIP34Height = 21111;
+        consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 581885; 
-        consensus.BIP66Height = 330776; 
-        consensus.CSVHeight = 770112; 
-        consensus.SegwitHeight = 834624; 
-        consensus.MinBIP9WarningHeight = 836640; // segwit activation height + miner confirmation window
+        consensus.BIP65Height = 0;
+        consensus.BIP66Height = 0;
+        consensus.CSVHeight = 0;
+        consensus.SegwitHeight = 0;
+        consensus.MinBIP9WarningHeight = 0;
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan =  120 * 60;
         consensus.nPowTargetSpacing = 1 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
-        consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
+        consensus.nRuleChangeActivationThreshold = 90; // 75% for testchains (75% of 120)
         consensus.nMinerConfirmationWindow = 120; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = Consensus::BIP9Deployment::NEVER_ACTIVE;
@@ -341,12 +341,12 @@ public:
         consensus.signet_blocks = true;
         consensus.signet_challenge.assign(bin.begin(), bin.end());
         consensus.nSubsidyHalvingInterval = 500000;
-        consensus.BIP34Height = 1;
+        consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256{};
-        consensus.BIP65Height = 1;
-        consensus.BIP66Height = 1;
-        consensus.CSVHeight = 1;
-        consensus.SegwitHeight = 1;
+        consensus.BIP65Height = 0;
+        consensus.BIP66Height = 0;
+        consensus.CSVHeight = 0;
+        consensus.SegwitHeight = 0;
         consensus.nPowTargetTimespan =  120 * 60;
         consensus.nPowTargetSpacing = 1 * 60;
         consensus.fPowAllowMinDifficultyBlocks = false;
@@ -535,7 +535,10 @@ public:
             }
         };
 
-        m_assumeutxo_data = MapAssumeutxo{};
+        m_assumeutxo_data = MapAssumeutxo{
+            {110, {AssumeutxoHash{uint256S("0xb7f2817f7f51a2d4108af1811325425fe0129af1b102742efd114d11c121c0b3")}, 110}},
+            {200, {AssumeutxoHash{uint256S("0xe9a77ab751ffd9288cebb6b851309075320e7dab58078040303fca1203ad80f4")}, 200}},
+        };
 
         chainTxData = ChainTxData{
             // Regtest: instant blocks for testing, higher tx rate

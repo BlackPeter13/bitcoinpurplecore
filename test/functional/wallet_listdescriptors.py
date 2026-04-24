@@ -128,7 +128,7 @@ class ListDescriptorsTest(BitcoinPurpleTestFramework):
             'wallet_name': 'w4',
             'descriptors': [
                 {'active': False,
-                 'desc': 'combo(0227d85ba011276cf25b51df6a188b75e604b38770a462b2d0e9fb2fc839ef5d3f)#np574htj',
+                 'desc': 'combo(02af74d02e81bb98737905ff11e35719b6de85f820c5f19e3e3686da5660ade982)#l4pquucj',
                  'timestamp': TIME_GENESIS_BLOCK},
             ]
         }

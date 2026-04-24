@@ -67,14 +67,14 @@ class WalletTest(BitcoinPurpleTestFramework):
         self.generate(self.nodes[0], 1, sync_fun=self.no_op)
 
         walletinfo = self.nodes[0].getwalletinfo()
-        assert_equal(walletinfo['immature_balance'], 50)
+        assert_equal(walletinfo['immature_balance'], 1)
         assert_equal(walletinfo['balance'], 0)
 
         self.sync_all(self.nodes[0:3])
         self.generate(self.nodes[1], COINBASE_MATURITY + 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
 
-        assert_equal(self.nodes[0].getbalance(), 50)
-        assert_equal(self.nodes[1].getbalance(), 50)
+        assert_equal(self.nodes[0].getbalance(), 1)
+        assert_equal(self.nodes[1].getbalance(), 1)
         assert_equal(self.nodes[2].getbalance(), 0)
 
         # Check that only first and second nodes have UTXOs
@@ -88,19 +88,19 @@ class WalletTest(BitcoinPurpleTestFramework):
         # First, outputs that are unspent both in the chain and in the
         # mempool should appear with or without include_mempool
         txout = self.nodes[0].gettxout(txid=confirmed_txid, n=confirmed_index, include_mempool=False)
-        assert_equal(txout['value'], 50)
+        assert_equal(txout['value'], 1)
         txout = self.nodes[0].gettxout(txid=confirmed_txid, n=confirmed_index, include_mempool=True)
-        assert_equal(txout['value'], 50)
+        assert_equal(txout['value'], 1)
 
-        # Send 21 BTCP from 0 to 2 using sendtoaddress call.
-        self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 11)
-        mempool_txid = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 10)
+        # Send 0.21 BTCP from 0 to 2 using sendtoaddress call.
+        self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), Decimal("0.11"))
+        mempool_txid = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), Decimal("0.10"))
 
         self.log.info("Test gettxout (second part)")
         # utxo spent in mempool should be visible if you exclude mempool
         # but invisible if you include mempool
         txout = self.nodes[0].gettxout(confirmed_txid, confirmed_index, False)
-        assert_equal(txout['value'], 50)
+        assert_equal(txout['value'], 1)
         txout = self.nodes[0].gettxout(confirmed_txid, confirmed_index)  # by default include_mempool=True
         assert txout is None
         txout = self.nodes[0].gettxout(confirmed_txid, confirmed_index, True)
@@ -112,9 +112,9 @@ class WalletTest(BitcoinPurpleTestFramework):
         txout1 = self.nodes[0].gettxout(mempool_txid, 0, True)
         txout2 = self.nodes[0].gettxout(mempool_txid, 1, True)
         # note the mempool tx will have randomly assigned indices
-        # but 10 will go to node2 and the rest will go to node0
+        # but 0.10 will go to node2 and the rest will go to node0
         balance = self.nodes[0].getbalance()
-        assert_equal(set([txout1['value'], txout2['value']]), set([10, balance]))
+        assert_equal(set([txout1['value'], txout2['value']]), set([Decimal("0.10"), balance]))
         walletinfo = self.nodes[0].getwalletinfo()
         assert_equal(walletinfo['immature_balance'], 0)
 
@@ -183,7 +183,7 @@ class WalletTest(BitcoinPurpleTestFramework):
         # The lock on a manually selected output is ignored
         unspent_0 = self.nodes[1].listunspent()[0]
         self.nodes[1].lockunspent(False, [unspent_0])
-        tx = self.nodes[1].createrawtransaction([unspent_0], { self.nodes[1].getnewaddress() : 1 })
+        tx = self.nodes[1].createrawtransaction([unspent_0], { self.nodes[1].getnewaddress() : Decimal("0.1") })
         self.nodes[1].fundrawtransaction(tx,{"lockUnspents": True})
 
         # fundrawtransaction can lock an input
@@ -200,10 +200,10 @@ class WalletTest(BitcoinPurpleTestFramework):
         # Have node1 generate 100 blocks (so node0 can recover the fee)
         self.generate(self.nodes[1], COINBASE_MATURITY, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
 
-        # node0 should end up with 100 btcp in block rewards plus fees, but
-        # minus the 21 plus fees sent to node2
-        assert_equal(self.nodes[0].getbalance(), 100 - 21)
-        assert_equal(self.nodes[2].getbalance(), 21)
+        # node0 should end up with 2 btcp in block rewards plus fees, but
+        # minus the 0.21 plus fees sent to node2
+        assert_equal(self.nodes[0].getbalance(), Decimal("2") - Decimal("0.21"))
+        assert_equal(self.nodes[2].getbalance(), Decimal("0.21"))
 
         # Node0 should have two unspent outputs.
         # Create a couple of transactions to send them to node2, submit them through
@@ -217,7 +217,7 @@ class WalletTest(BitcoinPurpleTestFramework):
             inputs = []
             outputs = {}
             inputs.append({"txid": utxo["txid"], "vout": utxo["vout"]})
-            outputs[self.nodes[2].getnewaddress()] = utxo["amount"] - 3
+            outputs[self.nodes[2].getnewaddress()] = utxo["amount"] - Decimal("0.03")
             raw_tx = self.nodes[0].createrawtransaction(inputs, outputs)
             txns_to_send.append(self.nodes[0].signrawtransactionwithwallet(raw_tx))
 
@@ -229,43 +229,43 @@ class WalletTest(BitcoinPurpleTestFramework):
         self.generate(self.nodes[1], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
 
         assert_equal(self.nodes[0].getbalance(), 0)
-        assert_equal(self.nodes[2].getbalance(), 94)
+        assert_equal(self.nodes[2].getbalance(), Decimal("1.94"))
 
         # Verify that a spent output cannot be locked anymore
         spent_0 = {"txid": node0utxos[0]["txid"], "vout": node0utxos[0]["vout"]}
         assert_raises_rpc_error(-8, "Invalid parameter, expected unspent output", self.nodes[0].lockunspent, False, [spent_0])
 
-        # Send 10 BTCP normal
+        # Send 0.10 BTCP normal
         address = self.nodes[0].getnewaddress("test")
         fee_per_byte = Decimal('0.001') / 1000
         self.nodes[2].settxfee(fee_per_byte * 1000)
-        txid = self.nodes[2].sendtoaddress(address, 10, "", "", False)
+        txid = self.nodes[2].sendtoaddress(address, Decimal("0.10"), "", "", False)
         self.generate(self.nodes[2], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
-        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), Decimal('84'), fee_per_byte, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
-        assert_equal(self.nodes[0].getbalance(), Decimal('10'))
+        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), Decimal("1.84"), fee_per_byte, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
+        assert_equal(self.nodes[0].getbalance(), Decimal("0.10"))
 
-        # Send 10 BTCP with subtract fee from amount
-        txid = self.nodes[2].sendtoaddress(address, 10, "", "", True)
+        # Send 0.10 BTCP with subtract fee from amount
+        txid = self.nodes[2].sendtoaddress(address, Decimal("0.10"), "", "", True)
         self.generate(self.nodes[2], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
-        node_2_bal -= Decimal('10')
+        node_2_bal -= Decimal("0.10")
         assert_equal(self.nodes[2].getbalance(), node_2_bal)
-        node_0_bal = self.check_fee_amount(self.nodes[0].getbalance(), Decimal('20'), fee_per_byte, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
+        node_0_bal = self.check_fee_amount(self.nodes[0].getbalance(), Decimal("0.20"), fee_per_byte, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
 
         self.log.info("Test sendmany")
 
-        # Sendmany 10 BTCP
-        txid = self.nodes[2].sendmany('', {address: 10}, 0, "", [])
+        # Sendmany 0.10 BTCP
+        txid = self.nodes[2].sendmany('', {address: Decimal("0.10")}, 0, "", [])
         self.generate(self.nodes[2], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
-        node_0_bal += Decimal('10')
-        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), node_2_bal - Decimal('10'), fee_per_byte, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
+        node_0_bal += Decimal("0.10")
+        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), node_2_bal - Decimal("0.10"), fee_per_byte, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
         assert_equal(self.nodes[0].getbalance(), node_0_bal)
 
-        # Sendmany 10 BTCP with subtract fee from amount
-        txid = self.nodes[2].sendmany('', {address: 10}, 0, "", [address])
+        # Sendmany 0.10 BTCP with subtract fee from amount
+        txid = self.nodes[2].sendmany('', {address: Decimal("0.10")}, 0, "", [address])
         self.generate(self.nodes[2], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
-        node_2_bal -= Decimal('10')
+        node_2_bal -= Decimal("0.10")
         assert_equal(self.nodes[2].getbalance(), node_2_bal)
-        node_0_bal = self.check_fee_amount(self.nodes[0].getbalance(), node_0_bal + Decimal('10'), fee_per_byte, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
+        node_0_bal = self.check_fee_amount(self.nodes[0].getbalance(), node_0_bal + Decimal("0.10"), fee_per_byte, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
 
         self.log.info("Test sendmany with fee_rate param (explicit fee rate in sat/vB)")
         fee_rate_sat_vb = 2
@@ -273,12 +273,12 @@ class WalletTest(BitcoinPurpleTestFramework):
         explicit_fee_rate_btcp_kvb = Decimal(fee_rate_btcp_kvb) / 1000
 
         # Test passing fee_rate as a string
-        txid = self.nodes[2].sendmany(amounts={address: 10}, fee_rate=str(fee_rate_sat_vb))
+        txid = self.nodes[2].sendmany(amounts={address: Decimal("0.10")}, fee_rate=str(fee_rate_sat_vb))
         self.generate(self.nodes[2], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
         balance = self.nodes[2].getbalance()
-        node_2_bal = self.check_fee_amount(balance, node_2_bal - Decimal('10'), explicit_fee_rate_btcp_kvb, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
+        node_2_bal = self.check_fee_amount(balance, node_2_bal - Decimal("0.10"), explicit_fee_rate_btcp_kvb, self.get_vsize(self.nodes[2].gettransaction(txid)['hex']))
         assert_equal(balance, node_2_bal)
-        node_0_bal += Decimal('10')
+        node_0_bal += Decimal("0.10")
         assert_equal(self.nodes[0].getbalance(), node_0_bal)
 
         # Test passing fee_rate as an integer
@@ -334,15 +334,15 @@ class WalletTest(BitcoinPurpleTestFramework):
         # 2. hex-changed one output to 0.0
         # 3. sign and send
         # 4. check if recipient (node0) can list the zero value tx
-        usp = self.nodes[1].listunspent(query_options={'minimumAmount': '49.998'})[0]
+        usp = self.nodes[1].listunspent(query_options={'minimumAmount': '0.9'})[0]
         inputs = [{"txid": usp['txid'], "vout": usp['vout']}]
-        outputs = {self.nodes[1].getnewaddress(): 49.998, self.nodes[0].getnewaddress(): 11.11}
+        outputs = {self.nodes[1].getnewaddress(): Decimal("0.8"), self.nodes[0].getnewaddress(): Decimal("0.1111")}
 
-        raw_tx = self.nodes[1].createrawtransaction(inputs, outputs).replace("c0833842", "00000000")  # replace 11.11 with 0.0 (int32)
+        raw_tx = self.nodes[1].createrawtransaction(inputs, outputs).replace("7086a900", "00000000")  # replace 0.1111 with 0.0 (int32)
         signed_raw_tx = self.nodes[1].signrawtransactionwithwallet(raw_tx)
         decoded_raw_tx = self.nodes[1].decoderawtransaction(signed_raw_tx['hex'])
         zero_value_txid = decoded_raw_tx['txid']
-        self.nodes[1].sendrawtransaction(signed_raw_tx['hex'])
+        self.nodes[1].sendrawtransaction(signed_raw_tx['hex'], maxfeerate=0)
 
         self.sync_all()
         self.generate(self.nodes[1], 1)  # mine a block
@@ -365,7 +365,7 @@ class WalletTest(BitcoinPurpleTestFramework):
         self.connect_nodes(0, 2)
         self.sync_all(self.nodes[0:3])
 
-        txid_not_broadcast = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 2)
+        txid_not_broadcast = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), Decimal("0.2"))
         tx_obj_not_broadcast = self.nodes[0].gettransaction(txid_not_broadcast)
         self.generate(self.nodes[1], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))  # mine a block, tx should not be in there
         assert_equal(self.nodes[2].getbalance(), node_2_bal)  # should not be changed because tx was not broadcasted
@@ -373,12 +373,12 @@ class WalletTest(BitcoinPurpleTestFramework):
         # now broadcast from another node, mine a block, sync, and check the balance
         self.nodes[1].sendrawtransaction(tx_obj_not_broadcast['hex'])
         self.generate(self.nodes[1], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
-        node_2_bal += 2
+        node_2_bal += Decimal("0.2")
         tx_obj_not_broadcast = self.nodes[0].gettransaction(txid_not_broadcast)
         assert_equal(self.nodes[2].getbalance(), node_2_bal)
 
         # create another tx
-        self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 2)
+        self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), Decimal("0.2"))
 
         # restart the nodes with -walletbroadcast=1
         self.stop_nodes()
@@ -391,15 +391,15 @@ class WalletTest(BitcoinPurpleTestFramework):
         self.sync_blocks(self.nodes[0:3])
 
         self.generate(self.nodes[0], 1, sync_fun=lambda: self.sync_blocks(self.nodes[0:3]))
-        node_2_bal += 2
+        node_2_bal += Decimal("0.2")
 
         # tx should be added to balance because after restarting the nodes tx should be broadcast
         assert_equal(self.nodes[2].getbalance(), node_2_bal)
 
         # send a tx with value in a string (PR#6380 +)
-        txid = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "2")
+        txid = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "0.01")
         tx_obj = self.nodes[0].gettransaction(txid)
-        assert_equal(tx_obj['amount'], Decimal('-2'))
+        assert_equal(tx_obj['amount'], Decimal('-0.01'))
 
         txid = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "0.0001")
         tx_obj = self.nodes[0].gettransaction(txid)
@@ -448,12 +448,12 @@ class WalletTest(BitcoinPurpleTestFramework):
             assert_raises_rpc_error(-5, "Pubkey is not a valid public key", self.nodes[0].importpubkey, "5361746f736869204e616b616d6f746f")
 
             # Bech32m addresses cannot be imported into a legacy wallet
-            assert_raises_rpc_error(-5, "Bech32m addresses cannot be imported into legacy wallets", self.nodes[0].importaddress, "bcrt1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqc8gma6")
+            assert_raises_rpc_error(-5, "Bech32m addresses cannot be imported into legacy wallets", self.nodes[0].importaddress, "rbtcp1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqmeq5aq")
 
             # Import address and private key to check correct behavior of spendable unspents
             # 1. Send some coins to generate new UTXO
             address_to_import = self.nodes[2].getnewaddress()
-            txid = self.nodes[0].sendtoaddress(address_to_import, 1)
+            txid = self.nodes[0].sendtoaddress(address_to_import, Decimal("0.01"))
             self.sync_mempools(self.nodes[0:3])
             vout = find_vout_for_address(self.nodes[2], txid, address_to_import)
             self.nodes[2].lockunspent(False, [{"txid": txid, "vout": vout}])
@@ -461,9 +461,9 @@ class WalletTest(BitcoinPurpleTestFramework):
 
             self.log.info("Test sendtoaddress with fee_rate param (explicit fee rate in sat/vB)")
             prebalance = self.nodes[2].getbalance()
-            assert prebalance > 2
+            assert prebalance > Decimal("0.002")
             address = self.nodes[1].getnewaddress()
-            amount = 3
+            amount = Decimal("0.001")
             fee_rate_sat_vb = 2
             fee_rate_btcp_kvb = fee_rate_sat_vb * 1e3 / 1e8
             # Test passing fee_rate as an integer
@@ -471,7 +471,7 @@ class WalletTest(BitcoinPurpleTestFramework):
             tx_size = self.get_vsize(self.nodes[2].gettransaction(txid)['hex'])
             self.generate(self.nodes[0], 1, sync_fun=lambda: self.sync_all(self.nodes[0:3]))
             postbalance = self.nodes[2].getbalance()
-            fee = prebalance - postbalance - Decimal(amount)
+            fee = prebalance - postbalance - amount
             assert_fee_amount(fee, tx_size, Decimal(fee_rate_btcp_kvb))
 
             prebalance = self.nodes[2].getbalance()
@@ -487,38 +487,38 @@ class WalletTest(BitcoinPurpleTestFramework):
             assert_fee_amount(fee, tx_size, Decimal(fee_rate_btcp_kvb))
 
             for key in ["totalFee", "feeRate"]:
-                assert_raises_rpc_error(-8, "Unknown named parameter key", self.nodes[2].sendtoaddress, address=address, amount=1, fee_rate=1, key=1)
+                assert_raises_rpc_error(-8, "Unknown named parameter key", self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), fee_rate=1, key=1)
 
             # Test setting explicit fee rate just below the minimum.
             self.log.info("Test sendtoaddress raises 'fee rate too low' if fee_rate of 0.99999999 is passed")
             assert_raises_rpc_error(-6, "Fee rate (0.999 sat/vB) is lower than the minimum fee rate setting (1.000 sat/vB)",
-                self.nodes[2].sendtoaddress, address=address, amount=1, fee_rate=0.999)
+                self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), fee_rate=0.999)
 
             self.log.info("Test sendtoaddress raises if an invalid fee_rate is passed")
             # Test fee_rate with zero values.
             msg = "Fee rate (0.000 sat/vB) is lower than the minimum fee rate setting (1.000 sat/vB)"
             for zero_value in [0, 0.000, 0.00000000, "0", "0.000", "0.00000000"]:
-                assert_raises_rpc_error(-6, msg, self.nodes[2].sendtoaddress, address=address, amount=1, fee_rate=zero_value)
+                assert_raises_rpc_error(-6, msg, self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), fee_rate=zero_value)
             msg = "Invalid amount"
             # Test fee_rate values that don't pass fixed-point parsing checks.
             for invalid_value in ["", 0.000000001, 1e-09, 1.111111111, 1111111111111111, "31.999999999999999999999"]:
-                assert_raises_rpc_error(-3, msg, self.nodes[2].sendtoaddress, address=address, amount=1.0, fee_rate=invalid_value)
+                assert_raises_rpc_error(-3, msg, self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), fee_rate=invalid_value)
             # Test fee_rate values that cannot be represented in sat/vB.
             for invalid_value in [0.0001, 0.00000001, 0.00099999, 31.99999999, "0.0001", "0.00000001", "0.00099999", "31.99999999"]:
-                assert_raises_rpc_error(-3, msg, self.nodes[2].sendtoaddress, address=address, amount=10, fee_rate=invalid_value)
+                assert_raises_rpc_error(-3, msg, self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), fee_rate=invalid_value)
             # Test fee_rate out of range (negative number).
-            assert_raises_rpc_error(-3, OUT_OF_RANGE, self.nodes[2].sendtoaddress, address=address, amount=1.0, fee_rate=-1)
+            assert_raises_rpc_error(-3, OUT_OF_RANGE, self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), fee_rate=-1)
             # Test type error.
             for invalid_value in [True, {"foo": "bar"}]:
-                assert_raises_rpc_error(-3, NOT_A_NUMBER_OR_STRING, self.nodes[2].sendtoaddress, address=address, amount=1.0, fee_rate=invalid_value)
+                assert_raises_rpc_error(-3, NOT_A_NUMBER_OR_STRING, self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), fee_rate=invalid_value)
 
             self.log.info("Test sendtoaddress raises if an invalid conf_target or estimate_mode is passed")
             for target, mode in product([-1, 0, 1009], ["economical", "conservative"]):
                 assert_raises_rpc_error(-8, "Invalid conf_target, must be between 1 and 1008",  # max value of 1008 per src/policy/fees.h
-                    self.nodes[2].sendtoaddress, address=address, amount=1, conf_target=target, estimate_mode=mode)
+                    self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), conf_target=target, estimate_mode=mode)
             for target, mode in product([-1, 0], ["btcp/kb", "sat/b"]):
                 assert_raises_rpc_error(-8, 'Invalid estimate_mode parameter, must be one of: "unset", "economical", "conservative"',
-                    self.nodes[2].sendtoaddress, address=address, amount=1, conf_target=target, estimate_mode=mode)
+                    self.nodes[2].sendtoaddress, address=address, amount=Decimal("0.01"), conf_target=target, estimate_mode=mode)
 
             # 2. Import address from node2 to node1
             self.nodes[1].importaddress(address_to_import)
@@ -633,8 +633,8 @@ class WalletTest(BitcoinPurpleTestFramework):
 
         # Test getaddressinfo on external address. Note that these addresses are taken from disablewallet.py
         assert_raises_rpc_error(-5, "Invalid or unsupported Base58-encoded address.", self.nodes[0].getaddressinfo, "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy")
-        address_info = self.nodes[0].getaddressinfo("mneYUmWYsuk7kySiURxCi3AGxrAqZxLgPZ")
-        assert_equal(address_info['address'], "mneYUmWYsuk7kySiURxCi3AGxrAqZxLgPZ")
+        address_info = self.nodes[0].getaddressinfo("Pf4NKo7hpzFvn8mx8Mdg39C1M6zxRnhb3J")
+        assert_equal(address_info['address'], "Pf4NKo7hpzFvn8mx8Mdg39C1M6zxRnhb3J")
         assert_equal(address_info["scriptPubKey"], "76a9144e3854046c7bd1594ac904e4793b6a45b36dea0988ac")
         assert not address_info["ismine"]
         assert not address_info["iswatchonly"]
@@ -644,7 +644,7 @@ class WalletTest(BitcoinPurpleTestFramework):
         # Test getaddressinfo 'ischange' field on change address.
         self.generate(self.nodes[0], 1, sync_fun=self.no_op)
         destination = self.nodes[1].getnewaddress()
-        txid = self.nodes[0].sendtoaddress(destination, 0.123)
+        txid = self.nodes[0].sendtoaddress(destination, Decimal("0.000123"))
         tx = self.nodes[0].gettransaction(txid=txid, verbose=True)['decoded']
         output_addresses = [vout['scriptPubKey']['address'] for vout in tx["vout"]]
         assert len(output_addresses) > 1
@@ -688,14 +688,14 @@ class WalletTest(BitcoinPurpleTestFramework):
 
         self.log.info("Test send* RPCs with verbose=True")
         address = self.nodes[0].getnewaddress("test")
-        txid_feeReason_one = self.nodes[2].sendtoaddress(address=address, amount=5, verbose=True)
+        txid_feeReason_one = self.nodes[2].sendtoaddress(address=address, amount=Decimal("0.05"), verbose=True)
         assert_equal(txid_feeReason_one["fee_reason"], "Fallback fee")
-        txid_feeReason_two = self.nodes[2].sendmany(dummy='', amounts={address: 5}, verbose=True)
+        txid_feeReason_two = self.nodes[2].sendmany(dummy='', amounts={address: Decimal("0.05")}, verbose=True)
         assert_equal(txid_feeReason_two["fee_reason"], "Fallback fee")
         self.log.info("Test send* RPCs with verbose=False")
-        txid_feeReason_three = self.nodes[2].sendtoaddress(address=address, amount=5, verbose=False)
+        txid_feeReason_three = self.nodes[2].sendtoaddress(address=address, amount=Decimal("0.05"), verbose=False)
         assert_equal(self.nodes[2].gettransaction(txid_feeReason_three)['txid'], txid_feeReason_three)
-        txid_feeReason_four = self.nodes[2].sendmany(dummy='', amounts={address: 5}, verbose=False)
+        txid_feeReason_four = self.nodes[2].sendmany(dummy='', amounts={address: Decimal("0.05")}, verbose=False)
         assert_equal(self.nodes[2].gettransaction(txid_feeReason_four)['txid'], txid_feeReason_four)
 
         if self.options.descriptors:
@@ -738,7 +738,7 @@ class WalletTest(BitcoinPurpleTestFramework):
         self.nodes[0].createwallet(wallet_name="zeroconf", load_on_startup=True)
         zeroconf_wallet = self.nodes[0].get_wallet_rpc("zeroconf")
         default_wallet = self.nodes[0].get_wallet_rpc(self.default_wallet_name)
-        default_wallet.sendtoaddress(zeroconf_wallet.getnewaddress(), Decimal('1.0'))
+        default_wallet.sendtoaddress(zeroconf_wallet.getnewaddress(), Decimal("0.01"))
         self.generate(self.nodes[0], 1, sync_fun=self.no_op)
         utxos = zeroconf_wallet.listunspent(minconf=0)
         assert_equal(len(utxos), 1)
@@ -755,7 +755,7 @@ class WalletTest(BitcoinPurpleTestFramework):
         assert_equal(bal['mine']['untrusted_pending'], utxos[0]['amount'])
 
         # spending an unconfirmed UTXO sent to ourselves should fail
-        assert_raises_rpc_error(-6, "Insufficient funds", zeroconf_wallet.sendtoaddress, zeroconf_wallet.getnewaddress(), Decimal('0.5'))
+        assert_raises_rpc_error(-6, "Insufficient funds", zeroconf_wallet.sendtoaddress, zeroconf_wallet.getnewaddress(), Decimal("0.005"))
 
         # check that it works again with -spendzeroconfchange set (=default)
         self.restart_node(0, ["-spendzeroconfchange=1"])
@@ -768,7 +768,7 @@ class WalletTest(BitcoinPurpleTestFramework):
         assert_equal(bal['mine']['trusted'], utxos[0]['amount'])
         assert_equal(bal['mine']['untrusted_pending'], 0)
 
-        zeroconf_wallet.sendtoaddress(zeroconf_wallet.getnewaddress(), Decimal('0.5'))
+        zeroconf_wallet.sendtoaddress(zeroconf_wallet.getnewaddress(), Decimal("0.005"))
 
 
 if __name__ == '__main__':

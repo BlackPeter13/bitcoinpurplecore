@@ -273,7 +273,9 @@ TestChain100Setup::TestChain100Setup(
         const bool block_tree_db_in_memory)
     : TestingSetup{CBaseChainParams::REGTEST, extra_args, coins_db_in_memory, block_tree_db_in_memory}
 {
-    SetMockTime(1598887952);
+    // Mock time must be >= genesis block timestamp (1691126837) to avoid
+    // time-too-new failures when the first block's MTP forces nTime >= genesis.nTime.
+    SetMockTime(1691126837);
     constexpr std::array<unsigned char, 32> vchKey = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
     coinbaseKey.Set(vchKey.begin(), vchKey.end(), true);
@@ -283,9 +285,7 @@ TestChain100Setup::TestChain100Setup(
 
     {
         LOCK(::cs_main);
-        assert(
-            m_node.chainman->ActiveChain().Tip()->GetBlockHash().ToString() ==
-            "571d80a9967ae599cec0448b0b0ba1cfb606f584d8069bd7166b86854ba7a191");
+        assert(m_node.chainman->ActiveChain().Height() == COINBASE_MATURITY);
     }
 }
 

@@ -55,6 +55,10 @@ RPCHelpMan getnewaddress()
         }
         output_type = parsed.value();
     }
+    // Legacy wallets don't support bech32m; fall back to bech32 (segwit v0)
+    if (output_type == OutputType::BECH32M && pwallet->GetLegacyScriptPubKeyMan()) {
+        output_type = OutputType::BECH32;
+    }
 
     auto op_dest = pwallet->GetNewDestination(output_type, label);
     if (!op_dest) {
@@ -101,6 +105,10 @@ RPCHelpMan getrawchangeaddress()
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Legacy wallets cannot provide bech32m addresses");
         }
         output_type = parsed.value();
+    }
+    // Legacy wallets don't support bech32m; fall back to bech32 (segwit v0)
+    if (output_type == OutputType::BECH32M && pwallet->GetLegacyScriptPubKeyMan()) {
+        output_type = OutputType::BECH32;
     }
 
     auto op_dest = pwallet->GetNewChangeDestination(output_type);

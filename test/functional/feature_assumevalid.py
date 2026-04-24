@@ -16,15 +16,15 @@ transactions:
               output can be spent
     102:      a block containing a transaction spending the coinbase
               transaction output. The transaction has an invalid signature.
-    103-2202: bury the bad block with just over two weeks' worth of blocks
-              (2100 blocks)
+    103-20262: bury the bad block with just over two weeks' worth of blocks
+               (20160 blocks)
 
 Start three nodes:
 
     - node0 has no -assumevalid parameter. Try to sync to block 2202. It will
       reject block 102 and only sync as far as block 101
     - node1 has -assumevalid set to the hash of block 102. Try to sync to
-      block 2202. node1 will sync all the way to block 2202.
+      block 20262. node1 will sync all the way to block 20262.
     - node2 has -assumevalid set to the hash of block 102. Try to sync to
       block 200. node2 will reject block 102 since it's assumed valid, but it
       isn't buried by at least two weeks' work.
@@ -117,7 +117,7 @@ class AssumeValidTest(BitcoinPurpleTestFramework):
         # Create a transaction spending the coinbase output with an invalid (null) signature
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.block1.vtx[0].sha256, 0), scriptSig=b""))
-        tx.vout.append(CTxOut(49 * 100000000, CScript([OP_TRUE])))
+        tx.vout.append(CTxOut(99 * 1000000, CScript([OP_TRUE])))
         tx.calc_sha256()
 
         block102 = create_block(self.tip, create_coinbase(height), self.block_time, txlist=[tx])
@@ -128,8 +128,8 @@ class AssumeValidTest(BitcoinPurpleTestFramework):
         self.block_time += 1
         height += 1
 
-        # Bury the assumed valid block 2100 deep
-        for _ in range(2100):
+        # Bury the assumed valid block 20160 deep (two weeks at 1 minute/block)
+        for _ in range(20160):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
             block.solve()
             self.blocks.append(block)
@@ -155,11 +155,11 @@ class AssumeValidTest(BitcoinPurpleTestFramework):
         p2p1.send_header_for_blocks(self.blocks[2000:])
 
         # Send all blocks to node1. All blocks will be accepted.
-        for i in range(2202):
+        for i in range(len(self.blocks)):
             p2p1.send_message(msg_block(self.blocks[i]))
         # Syncing 2200 blocks can take a while on slow systems. Give it plenty of time to sync.
         p2p1.sync_with_ping(960)
-        assert_equal(self.nodes[1].getblock(self.nodes[1].getbestblockhash())['height'], 2202)
+        assert_equal(self.nodes[1].getblock(self.nodes[1].getbestblockhash())['height'], len(self.blocks))
 
         p2p2 = self.nodes[2].add_p2p_connection(BaseNode())
         p2p2.send_header_for_blocks(self.blocks[0:200])

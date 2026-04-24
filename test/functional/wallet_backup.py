@@ -73,7 +73,7 @@ class WalletBackupTest(BitcoinPurpleTestFramework):
 
     def one_send(self, from_node, to_address):
         if (randint(1,2) == 1):
-            amount = Decimal(randint(1,10)) / Decimal(10)
+            amount = Decimal(randint(1,10)) / Decimal(1000)
             self.nodes[from_node].sendtoaddress(to_address, amount)
 
     def do_one_round(self):
@@ -152,9 +152,9 @@ class WalletBackupTest(BitcoinPurpleTestFramework):
         self.generate(self.nodes[2], 1)
         self.generate(self.nodes[3], COINBASE_MATURITY)
 
-        assert_equal(self.nodes[0].getbalance(), 50)
-        assert_equal(self.nodes[1].getbalance(), 50)
-        assert_equal(self.nodes[2].getbalance(), 50)
+        assert_equal(self.nodes[0].getbalance(), 1)
+        assert_equal(self.nodes[1].getbalance(), 1)
+        assert_equal(self.nodes[2].getbalance(), 1)
         assert_equal(self.nodes[3].getbalance(), 0)
 
         self.log.info("Creating transactions")
@@ -187,8 +187,8 @@ class WalletBackupTest(BitcoinPurpleTestFramework):
         total = balance0 + balance1 + balance2 + balance3
 
         # At this point, there are 214 blocks (103 for setup, then 10 rounds, then 101.)
-        # 114 are mature, so the sum of all wallets should be 114 * 50 = 5700.
-        assert_equal(total, 5700)
+        # 114 are mature, so the sum of all wallets should be 114 * 1 = 114.
+        assert_equal(total, 114)
 
         ##
         # Test restoring spender wallets from backups

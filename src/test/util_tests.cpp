@@ -346,8 +346,8 @@ BOOST_AUTO_TEST_CASE(util_ParseMoney)
 
     BOOST_CHECK_EQUAL(ParseMoney("12345.6789").value(), (COIN/10000)*123456789);
 
-    BOOST_CHECK_EQUAL(ParseMoney("10000000.00").value(), COIN*10000000);
-    BOOST_CHECK_EQUAL(ParseMoney("1000000.00").value(), COIN*1000000);
+    BOOST_CHECK_EQUAL(ParseMoney("1000000.00").value(), COIN*1000000); // MAX_MONEY for BTCP
+    BOOST_CHECK_EQUAL(ParseMoney("500000.00").value(), COIN*500000);
     BOOST_CHECK_EQUAL(ParseMoney("100000.00").value(), COIN*100000);
     BOOST_CHECK_EQUAL(ParseMoney("10000.00").value(), COIN*10000);
     BOOST_CHECK_EQUAL(ParseMoney("1000.00").value(), COIN*1000);
@@ -371,7 +371,7 @@ BOOST_AUTO_TEST_CASE(util_ParseMoney)
     BOOST_CHECK_EQUAL(ParseMoney(" 0.00000001").value(), COIN/100000000);
 
     // Parsing amount that cannot be represented should fail
-    BOOST_CHECK(!ParseMoney("100000000.00"));
+    BOOST_CHECK(!ParseMoney("1000001.00")); // exceeds BTCP MAX_MONEY (1M BTCP)
     BOOST_CHECK(!ParseMoney("0.000000001"));
 
     // Parsing empty string should fail
@@ -1279,7 +1279,7 @@ BOOST_AUTO_TEST_CASE(test_ToUpper)
 BOOST_AUTO_TEST_CASE(test_Capitalize)
 {
     BOOST_CHECK_EQUAL(Capitalize(""), "");
-    BOOST_CHECK_EQUAL(Capitalize("bitcoinpurple"), "BitcoinPurple");
+    BOOST_CHECK_EQUAL(Capitalize("bitcoin"), "Bitcoin");
     BOOST_CHECK_EQUAL(Capitalize("\x00\xfe\xff"), "\x00\xfe\xff");
 }
 
@@ -1594,7 +1594,7 @@ BOOST_AUTO_TEST_CASE(message_sign)
     const std::string message = "Trust no one";
 
     const std::string expected_signature =
-        "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=";
+        "IAHWRSEoufPjmAhgLKs92f3XAvSDEcuiznZaDezdYuVgZFjNY2g1LYogRPP31cOtWh4IdIhptz/zc8GVXEZM0gw=";
 
     CKey privkey;
     std::string generated_signature;
@@ -1627,43 +1627,43 @@ BOOST_AUTO_TEST_CASE(message_verify)
 
     BOOST_CHECK_EQUAL(
         MessageVerify(
-            "3B5fQsEXEaV8v6U3ejYc8XaKXAkyQj2MjV",
+            "PHypeJ8vjbewomSNsiCYNoBezPe91QBoxG",
             "signature should be irrelevant",
             "message too"),
         MessageVerificationResult::ERR_ADDRESS_NO_KEY);
 
     BOOST_CHECK_EQUAL(
         MessageVerify(
-            "1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
+            "PrmNKu36qM7VZjC4RzDdNF4byzukZnFMWG",
             "invalid signature, not in base64 encoding",
             "message should be irrelevant"),
         MessageVerificationResult::ERR_MALFORMED_SIGNATURE);
 
     BOOST_CHECK_EQUAL(
         MessageVerify(
-            "1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
+            "PrmNKu36qM7VZjC4RzDdNF4byzukZnFMWG",
             "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
             "message should be irrelevant"),
         MessageVerificationResult::ERR_PUBKEY_NOT_RECOVERED);
 
     BOOST_CHECK_EQUAL(
         MessageVerify(
-            "15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs",
-            "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=",
+            "Pc8D6LL7BvDd8mxnVnS95WsxyF49tct89d",
+            "IAHWRSEoufPjmAhgLKs92f3XAvSDEcuiznZaDezdYuVgZFjNY2g1LYogRPP31cOtWh4IdIhptz/zc8GVXEZM0gw=",
             "I never signed this"),
         MessageVerificationResult::ERR_NOT_SIGNED);
 
     BOOST_CHECK_EQUAL(
         MessageVerify(
-            "15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs",
-            "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=",
+            "Pc8D6LL7BvDd8mxnVnS95WsxyF49tct89d",
+            "IAHWRSEoufPjmAhgLKs92f3XAvSDEcuiznZaDezdYuVgZFjNY2g1LYogRPP31cOtWh4IdIhptz/zc8GVXEZM0gw=",
             "Trust no one"),
         MessageVerificationResult::OK);
 
     BOOST_CHECK_EQUAL(
         MessageVerify(
-            "11canuhp9X2NocwCq7xNrQYTmUgZAnLK3",
-            "IIcaIENoYW5jZWxsb3Igb24gYnJpbmsgb2Ygc2Vjb25kIGJhaWxvdXQgZm9yIGJhbmtzIAaHRtbCeDZINyavx14=",
+            "Pc8D6LL7BvDd8mxnVnS95WsxyF49tct89d",
+            "II0wefav15mu6St5brTqgz/Zw46wpCifnfp+7ww6n57nZzjmS8RhAMf/Cf6g3lEZH9OiPsFLY9F55BQoYZvqclI=",
             "Trust me"),
         MessageVerificationResult::OK);
 }

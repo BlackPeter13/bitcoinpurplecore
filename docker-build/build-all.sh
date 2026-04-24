@@ -1,9 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ###############################################################################
 # BitcoinPurple Core - Build All Platforms Script
 # Builds binaries for Linux x86_64, Windows x64, and Linux ARM64
 ###############################################################################
 
+export LC_ALL=C
 set -e
 
 # Colors

@@ -55,7 +55,7 @@ class MiningTest(BitcoinPurpleTestFramework):
 
     def mine_chain(self):
         self.log.info('Create some old blocks')
-        for t in range(TIME_GENESIS_BLOCK, TIME_GENESIS_BLOCK + 200 * 600, 600):
+        for t in range(TIME_GENESIS_BLOCK, TIME_GENESIS_BLOCK + 200 * 60, 60):
             self.nodes[0].setmocktime(t)
             self.generate(self.wallet, 1, sync_fun=self.no_op)
         mining_info = self.nodes[0].getmininginfo()

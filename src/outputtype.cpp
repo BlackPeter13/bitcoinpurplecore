@@ -63,8 +63,11 @@ CTxDestination GetDestinationForKey(const CPubKey& key, OutputType type)
             return witdest;
         }
     }
-    case OutputType::BECH32M:
-    case OutputType::UNKNOWN: {} // This function should never be used with BECH32M or UNKNOWN, so let it assert
+    case OutputType::BECH32M: {
+        if (!key.IsCompressed()) return PKHash(key);
+        return WitnessV1Taproot(XOnlyPubKey(key));
+    }
+    case OutputType::UNKNOWN: {} // This function should never be used with UNKNOWN, so let it assert
     } // no default case, so the compiler can warn about missing cases
     assert(false);
 }

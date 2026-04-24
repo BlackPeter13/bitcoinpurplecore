@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(get_next_work)
     const auto chainParams = CreateChainParams(*m_node.args, CBaseChainParams::MAIN);
     int64_t nLastRetargetTime = 1261130161; // Block #30240
     CBlockIndex pindexLast;
-    pindexLast.nHeight = 32255;
+    pindexLast.nHeight = 32159; // 32160 = 268 * 120 (BTCP retarget boundary)
     pindexLast.nTime = 1262152739;  // Block #32255
     pindexLast.nBits = 0x1d00ffff;
 
@@ -26,7 +26,8 @@ BOOST_AUTO_TEST_CASE(get_next_work)
     // CalculateNextWorkRequired(); redoing the calculation here would be just
     // reimplementing the same code that is written in pow.cpp. Rather than
     // copy that code, we just hardcode the expected result.
-    unsigned int expected_nbits = 0x1d00d86aU;
+    // BTCP: nPowTargetTimespan=7200s, clamped 4x → old*4=0x1d03fffc
+    unsigned int expected_nbits = 0x1D03FFFCU;
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), expected_nbits);
     BOOST_CHECK(PermittedDifficultyTransition(chainParams->GetConsensus(), pindexLast.nHeight+1, pindexLast.nBits, expected_nbits));
 }
@@ -37,10 +38,11 @@ BOOST_AUTO_TEST_CASE(get_next_work_pow_limit)
     const auto chainParams = CreateChainParams(*m_node.args, CBaseChainParams::MAIN);
     int64_t nLastRetargetTime = 1231006505; // Block #0
     CBlockIndex pindexLast;
-    pindexLast.nHeight = 2015;
+    pindexLast.nHeight = 2039; // 2040 = 17 * 120 (BTCP retarget boundary)
     pindexLast.nTime = 1233061996;  // Block #2015
     pindexLast.nBits = 0x1d00ffff;
-    unsigned int expected_nbits = 0x1d00ffffU;
+    // BTCP: clamped 4x → old*4=0x1d03fffc
+    unsigned int expected_nbits = 0x1D03FFFCU;
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), expected_nbits);
     BOOST_CHECK(PermittedDifficultyTransition(chainParams->GetConsensus(), pindexLast.nHeight+1, pindexLast.nBits, expected_nbits));
 }
@@ -49,12 +51,14 @@ BOOST_AUTO_TEST_CASE(get_next_work_pow_limit)
 BOOST_AUTO_TEST_CASE(get_next_work_lower_limit_actual)
 {
     const auto chainParams = CreateChainParams(*m_node.args, CBaseChainParams::MAIN);
-    int64_t nLastRetargetTime = 1279008237; // Block #66528
+    // BTCP nPowTargetTimespan=7200s: need elapsed<1800s to hit lower limit (1/4 min timespan)
+    int64_t nLastRetargetTime = 1279296671; // 1000s before pindexLast (hits lower limit for BTCP)
     CBlockIndex pindexLast;
-    pindexLast.nHeight = 68543;
+    pindexLast.nHeight = 68519; // 68520 = 571 * 120 (BTCP retarget boundary)
     pindexLast.nTime = 1279297671;  // Block #68543
     pindexLast.nBits = 0x1c05a3f4;
-    unsigned int expected_nbits = 0x1c0168fdU;
+    // BTCP: elapsed=1000s < 1800s floor → clamped to 1800 → old/4=0x1c0168fd
+    unsigned int expected_nbits = 0x1C0168FDU;
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), expected_nbits);
     BOOST_CHECK(PermittedDifficultyTransition(chainParams->GetConsensus(), pindexLast.nHeight+1, pindexLast.nBits, expected_nbits));
     // Test that reducing nbits further would not be a PermittedDifficultyTransition.
@@ -68,7 +72,7 @@ BOOST_AUTO_TEST_CASE(get_next_work_upper_limit_actual)
     const auto chainParams = CreateChainParams(*m_node.args, CBaseChainParams::MAIN);
     int64_t nLastRetargetTime = 1263163443; // NOTE: Not an actual block time
     CBlockIndex pindexLast;
-    pindexLast.nHeight = 46367;
+    pindexLast.nHeight = 46319; // 46320 = 386 * 120 (BTCP retarget boundary)
     pindexLast.nTime = 1269211443;  // Block #46367
     pindexLast.nBits = 0x1c387f6f;
     unsigned int expected_nbits = 0x1d00e1fdU;

@@ -11,28 +11,28 @@ from test_framework.util import (
     assert_raises_rpc_error,
 )
 
-BECH32_VALID = 'bcrt1qtmp74ayg7p24uslctssvjm06q5phz4yrxucgnv'
-BECH32_VALID_CAPITALS = 'BCRT1QPLMTZKC2XHARPPZDLNPAQL78RSHJ68U33RAH7R'
-BECH32_VALID_MULTISIG = 'bcrt1qdg3myrgvzw7ml9q0ejxhlkyxm7vl9r56yzkfgvzclrf4hkpx9yfqhpsuks'
+BECH32_VALID = 'rbtcp1qtmp74ayg7p24uslctssvjm06q5phz4yrwxzxsu'
+BECH32_VALID_CAPITALS = 'RBTCP1QPLMTZKC2XHARPPZDLNPAQL78RSHJ68U3EE8EAN'
+BECH32_VALID_MULTISIG = 'rbtcp1qdg3myrgvzw7ml9q0ejxhlkyxm7vl9r56yzkfgvzclrf4hkpx9yfq5lcnk2'
 
-BECH32_INVALID_BECH32 = 'bcrt1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqdmchcc'
-BECH32_INVALID_BECH32M = 'bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7k35mrzd'
-BECH32_INVALID_VERSION = 'bcrt130xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqynjegk'
-BECH32_INVALID_SIZE = 'bcrt1s0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7v8n0nx0muaewav25430mtr'
-BECH32_INVALID_V0_SIZE = 'bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kqqq5k3my'
+BECH32_INVALID_BECH32 = 'rbtcp1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqdnynek'
+BECH32_INVALID_BECH32M = 'rbtcp1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsskgfc'
+BECH32_INVALID_VERSION = 'rbtcp13qqqq0pjvuz'
+BECH32_INVALID_SIZE = 'rbtcp1sqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq73a74a'
+BECH32_INVALID_V0_SIZE = 'rbtcp1qqqqqqqqqqqqqqqqqyefc6q'
 BECH32_INVALID_PREFIX = 'bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7k7grplx'
-BECH32_TOO_LONG = 'bcrt1q049edschfnwystcqnsvyfpj23mpsg3jcedq9xv049edschfnwystcqnsvyfpj23mpsg3jcedq9xv049edschfnwystcqnsvyfpj23m'
-BECH32_ONE_ERROR = 'bcrt1q049edschfnwystcqnsvyfpj23mpsg3jcedq9xv'
-BECH32_ONE_ERROR_CAPITALS = 'BCRT1QPLMTZKC2XHARPPZDLNPAQL78RSHJ68U32RAH7R'
-BECH32_TWO_ERRORS = 'bcrt1qax9suht3qv95sw33xavx8crpxduefdrsvgsklu' # should be bcrt1qax9suht3qv95sw33wavx8crpxduefdrsvgsklx
-BECH32_NO_SEPARATOR = 'bcrtq049ldschfnwystcqnsvyfpj23mpsg3jcedq9xv'
-BECH32_INVALID_CHAR = 'bcrt1q04oldschfnwystcqnsvyfpj23mpsg3jcedq9xv'
-BECH32_MULTISIG_TWO_ERRORS = 'bcrt1qdg3myrgvzw7ml8q0ejxhlkyxn7vl9r56yzkfgvzclrf4hkpx9yfqhpsuks'
-BECH32_WRONG_VERSION = 'bcrt1ptmp74ayg7p24uslctssvjm06q5phz4yrxucgnv'
+BECH32_TOO_LONG = 'rbtcp1q049edschfnwystcqnsvyfpj23mpsg3jcedq9xv049edschfnwystcqnsvyfpj23mpsg3jcedq9xv049edschfnwystcqnsvyfpj23m'
+BECH32_ONE_ERROR = 'rbtcp1qtmp84ayg7p24uslctssvjm06q5phz4yrwxzxsu' # pos 10 corrupted (7→8)
+BECH32_ONE_ERROR_CAPITALS = 'RBTCP1QTMP74AYG7P24USLCTSSVJM06Q5PHZ4YRXXZXSU' # pos 39 corrupted (W→X)
+BECH32_TWO_ERRORS = 'rbtcp1qtmp74ayg7p24uslcsssvjm06q5phz4yrwyzxsu' # pos 23,40 corrupted
+BECH32_NO_SEPARATOR = 'rbtcpq049ldschfnwystcqnsvyfpj23mpsg3jcedq9xv'
+BECH32_INVALID_CHAR = 'rbtcp1q04oldschfnwystcqnsvyfpj23mpsg3jcedq9xv'
+BECH32_MULTISIG_TWO_ERRORS = 'rbtcp1qdg3myrgvzw7mlzq0ejxhlkyxp7vl9r56yzkfgvzclrf4hkpx9yfq5lcnk2' # pos 20,31 corrupted
+BECH32_WRONG_VERSION = 'rbtcp1ptmp74ayg7p24uslctssvjm06q5phz4yrwxzxsu'
 
-BASE58_VALID = 'mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn'
+BASE58_VALID = 'PbES2crq6ksXDrTEyepNAwfRBpjhtwxH2g'
 BASE58_INVALID_PREFIX = '17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem'
-BASE58_INVALID_CHECKSUM = 'mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJJfn'
+BASE58_INVALID_CHECKSUM = 'PbES2crq6ksXDrTEyepNAwfRBpjhtwxH2f'
 BASE58_INVALID_LENGTH = '2VKf7XKMrp4bVNVmuRbyCewkP8FhGLP2E54LHDPakr9Sq5mtU2'
 
 INVALID_ADDRESS = 'asfah14i8fajz0123f'
@@ -69,14 +69,14 @@ class InvalidAddressErrorMessageTest(BitcoinPurpleTestFramework):
         self.check_invalid(BECH32_INVALID_BECH32M, 'Version 0 witness address must use Bech32 checksum')
         self.check_invalid(BECH32_INVALID_VERSION, 'Invalid Bech32 address witness version')
         self.check_invalid(BECH32_INVALID_V0_SIZE, 'Invalid Bech32 v0 address data size')
-        self.check_invalid(BECH32_TOO_LONG, 'Bech32 string too long', list(range(90, 108)))
-        self.check_invalid(BECH32_ONE_ERROR, 'Invalid Bech32 checksum', [9])
-        self.check_invalid(BECH32_TWO_ERRORS, 'Invalid Bech32 checksum', [22, 43])
-        self.check_invalid(BECH32_ONE_ERROR_CAPITALS, 'Invalid Bech32 checksum', [38])
+        self.check_invalid(BECH32_TOO_LONG, 'Bech32 string too long', list(range(90, 109)))
+        self.check_invalid(BECH32_ONE_ERROR, 'Invalid Bech32 checksum', [10])
+        self.check_invalid(BECH32_TWO_ERRORS, 'Invalid Bech32 checksum', [23, 40])
+        self.check_invalid(BECH32_ONE_ERROR_CAPITALS, 'Invalid Bech32 checksum', [39])
         self.check_invalid(BECH32_NO_SEPARATOR, 'Missing separator')
-        self.check_invalid(BECH32_INVALID_CHAR, 'Invalid Base 32 character', [8])
-        self.check_invalid(BECH32_MULTISIG_TWO_ERRORS, 'Invalid Bech32 checksum', [19, 30])
-        self.check_invalid(BECH32_WRONG_VERSION, 'Invalid Bech32 checksum', [5])
+        self.check_invalid(BECH32_INVALID_CHAR, 'Invalid Base 32 character', [9])
+        self.check_invalid(BECH32_MULTISIG_TWO_ERRORS, 'Invalid Bech32 checksum', [20, 31])
+        self.check_invalid(BECH32_WRONG_VERSION, 'Invalid Bech32 checksum', [6])
 
         # Valid Bech32
         self.check_valid(BECH32_VALID)

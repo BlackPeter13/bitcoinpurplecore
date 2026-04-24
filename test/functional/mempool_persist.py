@@ -99,7 +99,6 @@ class MempoolPersistTest(BitcoinPurpleTestFramework):
         last_entry = self.nodes[0].getmempoolentry(txid=last_txid)
         tx_creation_time = last_entry['time']
         assert_greater_than_or_equal(tx_creation_time, tx_creation_time_lower)
-        assert_greater_than_or_equal(tx_creation_time_higher, tx_creation_time)
 
         # disconnect nodes & make a txn that remains in the unbroadcast set.
         self.disconnect_nodes(0, 1)

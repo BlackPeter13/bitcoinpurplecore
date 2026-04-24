@@ -14,6 +14,7 @@ src/bitcoinpurple-wallet
 src/test/fuzz/fuzz
 src/test/test_bitcoinpurple
 src/qt/test/test_bitcoinpurple-qt
+src/minisketch/test
 
 # autoreconf
 Makefile.in
@@ -140,6 +141,7 @@ contrib/devtools/split-debug.sh
 
 # Output from running db4 installation
 db4/
+db-4.8.30.NC/
 
 # clang-check
 *.plist
