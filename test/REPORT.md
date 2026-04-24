@@ -4,12 +4,12 @@ Overview of the environment setup and available test types, with commands and cu
 
 | # | Type | Status |
 |---|------|--------|
-| 0 | Preparation (build) | ⬜ To do |
-| 1 | Unit Tests | ⬜ To do |
+| 0 | Preparation (build) | ✅ Done |
+| 1 | Unit Tests | ✅ Done |
 | 2 | Functional Tests | ⬜ To do |
 | 3 | Fuzz Tests | ⬜ To do |
 | 4 | Lint | ⬜ To do |
-| 5 | Util / Integration Tests | ⬜ To do |
+| 5 | Util / Integration Tests | ✅ Done |
 
 ---
 
@@ -94,7 +94,7 @@ make -j$(nproc)
 | `bitcoinpurple-wallet` | `src/bitcoinpurple-wallet` |
 | `bitcoinpurple-qt` | `src/qt/bitcoinpurple-qt` *(only with --with-gui)* |
 
-**Status:** ⬜ To do
+**Status:** ✅ Done
 
 ---
 
@@ -111,7 +111,7 @@ make -j$(nproc)
 make check
 ```
 
-**Status:** ⬜ To do
+**Status:** ✅ Done
 
 ---
 
@@ -206,4 +206,4 @@ test/lint/lint-all.sh
 make check
 ```
 
-**Status:** ⬜ To do
+**Status:** ✅ Done

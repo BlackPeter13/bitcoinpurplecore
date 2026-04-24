@@ -45,7 +45,7 @@ static void BlockToJsonVerbose(benchmark::Bench& bench)
     });
 }
 
-BENCHMARK(BlockToJsonVerbose, benchmark::PriorityLevel::HIGH);
+BENCHMARK(BlockToJsonVerbose, benchmark::PriorityLevel::LOW);
 
 static void BlockToJsonVerboseWrite(benchmark::Bench& bench)
 {
@@ -57,4 +57,4 @@ static void BlockToJsonVerboseWrite(benchmark::Bench& bench)
     });
 }
 
-BENCHMARK(BlockToJsonVerboseWrite, benchmark::PriorityLevel::HIGH);
+BENCHMARK(BlockToJsonVerboseWrite, benchmark::PriorityLevel::LOW);
