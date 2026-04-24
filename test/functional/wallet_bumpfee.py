@@ -607,9 +607,9 @@ def test_unconfirmed_not_spendable(self, rbf_node, rbf_node_address):
 
 def test_bumpfee_metadata(self, rbf_node, dest_address):
     self.log.info('Test that bumped txn metadata persists to new txn record')
-    assert rbf_node.getbalance() < 49
+    assert rbf_node.getbalance() < Decimal("0.49")
     self.generatetoaddress(rbf_node, 101, rbf_node.getnewaddress())
-    rbfid = rbf_node.sendtoaddress(dest_address, 49, "comment value", "to value")
+    rbfid = rbf_node.sendtoaddress(dest_address, Decimal("0.49"), "comment value", "to value")
     bumped_tx = rbf_node.bumpfee(rbfid)
     bumped_wtx = rbf_node.gettransaction(bumped_tx["txid"])
     assert_equal(bumped_wtx["comment"], "comment value")
@@ -674,13 +674,13 @@ def test_no_more_inputs_fails(self, rbf_node, dest_address):
 
 def test_feerate_checks_replaced_outputs(self, rbf_node, peer_node):
     # Make sure there is enough balance
-    peer_node.sendtoaddress(rbf_node.getnewaddress(), 60)
+    peer_node.sendtoaddress(rbf_node.getnewaddress(), Decimal("0.60"))
     self.generate(peer_node, 1)
 
     self.log.info("Test that feerate checks use replaced outputs")
     outputs = []
     for i in range(50):
-        outputs.append({rbf_node.getnewaddress(address_type="bech32"): 1})
+        outputs.append({rbf_node.getnewaddress(address_type="bech32"): Decimal("0.01")})
     tx_res = rbf_node.send(outputs=outputs, fee_rate=5)
     tx_details = rbf_node.gettransaction(txid=tx_res["txid"], verbose=True)
 
@@ -694,7 +694,7 @@ def test_feerate_checks_replaced_outputs(self, rbf_node, peer_node):
     min_fee_rate = (min_fee / est_bumped_size).quantize(Decimal("1.000"))
 
     # Attempt to bumpfee and replace all outputs with a single one using a feerate slightly less than the minimum
-    new_outputs = [{rbf_node.getnewaddress(address_type="bech32"): 49}]
+    new_outputs = [{rbf_node.getnewaddress(address_type="bech32"): Decimal("0.49")}]
     assert_raises_rpc_error(-8, "Insufficient total fee", rbf_node.bumpfee, tx_res["txid"], {"fee_rate": min_fee_rate - 1, "outputs": new_outputs})
 
     # Bumpfee and replace all outputs with a single one using the minimum feerate

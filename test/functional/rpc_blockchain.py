@@ -55,7 +55,7 @@ from test_framework.wallet import MiniWallet
 
 
 HEIGHT = 200  # blocks mined
-TIME_RANGE_STEP = 600  # ten-minute steps
+TIME_RANGE_STEP = 60  # one-minute steps
 TIME_RANGE_MTP = TIME_GENESIS_BLOCK + (HEIGHT - 6) * TIME_RANGE_STEP
 TIME_RANGE_TIP = TIME_GENESIS_BLOCK + (HEIGHT - 1) * TIME_RANGE_STEP
 TIME_RANGE_END = TIME_GENESIS_BLOCK + HEIGHT * TIME_RANGE_STEP
@@ -95,7 +95,7 @@ class BlockchainTest(BitcoinPurpleTestFramework):
         assert self.nodes[0].verifychain(4, 0)
 
     def mine_chain(self):
-        self.log.info(f"Generate {HEIGHT} blocks after the genesis block in ten-minute steps")
+        self.log.info(f"Generate {HEIGHT} blocks after the genesis block in one-minute steps")
         for t in range(TIME_GENESIS_BLOCK, TIME_RANGE_END, TIME_RANGE_STEP):
             self.nodes[0].setmocktime(t)
             self.generate(self.wallet, 1)
@@ -297,7 +297,7 @@ class BlockchainTest(BitcoinPurpleTestFramework):
         chaintxstats = self.nodes[0].getchaintxstats(nblocks=1)
         # 200 txs plus genesis tx
         assert_equal(chaintxstats['txcount'], HEIGHT + 1)
-        # tx rate should be 1 per 10 minutes, or 1/600
+        # tx rate should be 1 per minute, or 1/60
         # we have to round because of binary math
         assert_equal(round(chaintxstats['txrate'] * TIME_RANGE_STEP, 10), Decimal(1))
 
@@ -331,7 +331,7 @@ class BlockchainTest(BitcoinPurpleTestFramework):
         node = self.nodes[0]
         res = node.gettxoutsetinfo()
 
-        assert_equal(res['total_amount'], Decimal('8725.00000000'))
+        assert_equal(res['total_amount'], Decimal('174.50000000'))
         assert_equal(res['transactions'], HEIGHT)
         assert_equal(res['height'], HEIGHT)
         assert_equal(res['txouts'], HEIGHT)
@@ -449,8 +449,8 @@ class BlockchainTest(BitcoinPurpleTestFramework):
             """).strip(),
             lambda: self.nodes[0].getnetworkhashps("a", []),
         )
-        # This should be 2 hashes every 10 minutes or 1/300
-        assert abs(hashes_per_second * 300 - 1) < 0.0001
+        # This should be 2 hashes every 1 minute or 1/30
+        assert abs(hashes_per_second * 30 - 1) < 0.0001
 
     def _test_stopatheight(self):
         self.log.info("Test stopping at height")

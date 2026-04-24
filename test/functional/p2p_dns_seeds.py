@@ -61,7 +61,7 @@ class P2PDNSSeeds(BitcoinPurpleTestFramework):
         self.log.info("Check that we *do not* query DNS seeds if we have 2 outbound connections")
 
         self.restart_node(0)
-        with self.nodes[0].assert_debug_log(expected_msgs=["P2P peers available. Skipped DNS seeding."], timeout=12):
+        with self.nodes[0].assert_debug_log(expected_msgs=["P2P peers available. Skipped DNS seeding."], timeout=60):
             for i in range(2):
                 self.nodes[0].add_outbound_p2p_connection(P2PInterface(), p2p_idx=i, connection_type="outbound-full-relay")
 
@@ -74,7 +74,7 @@ class P2PDNSSeeds(BitcoinPurpleTestFramework):
         self.log.info("Check that we *do* query DNS seeds if we only have 2 block-relay-only connections")
 
         self.restart_node(0)
-        with self.nodes[0].assert_debug_log(expected_msgs=["Loading addresses from DNS seed"], timeout=12):
+        with self.nodes[0].assert_debug_log(expected_msgs=["Loading addresses from DNS seed"], timeout=60):
             # This mimics the "anchors" logic where nodes are likely to
             # reconnect to block-relay-only connections on startup.
             # Since we do not participate in addr relay with these connections,

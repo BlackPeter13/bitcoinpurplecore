@@ -85,7 +85,7 @@ class MempoolAcceptanceTest(BitcoinPurpleTestFramework):
         tx = self.wallet.create_self_transfer()['tx']  # Pick a random coin(base) to spend
         tx.vout.append(deepcopy(tx.vout[0]))
         tx.vout[0].nValue = int(0.3 * COIN)
-        tx.vout[1].nValue = int(49 * COIN)
+        tx.vout[1].nValue = int(0.6 * COIN)
         raw_tx_in_block = tx.serialize().hex()
         txid_in_block = self.wallet.sendrawtransaction(from_node=node, tx_hex=raw_tx_in_block)
         self.generate(node, 1)
@@ -345,7 +345,8 @@ class MempoolAcceptanceTest(BitcoinPurpleTestFramework):
         )
 
         # Prep for tiny-tx tests with wsh(OP_TRUE) output
-        seed_tx = self.wallet.send_to(from_node=node, scriptPubKey=script_to_p2wsh_script(CScript([OP_TRUE])), amount=COIN)
+        seed_value = int(Decimal('0.99') * COIN)
+        seed_tx = self.wallet.send_to(from_node=node, scriptPubKey=script_to_p2wsh_script(CScript([OP_TRUE])), amount=seed_value)
         self.generate(node, 1)
 
         self.log.info('A tiny transaction(in non-witness bytes) that is disallowed')
@@ -366,7 +367,7 @@ class MempoolAcceptanceTest(BitcoinPurpleTestFramework):
         )
 
         self.log.info('Minimally-small transaction(in non-witness bytes) that is allowed')
-        tx.vout[0] = CTxOut(COIN - 1000, DUMMY_MIN_OP_RETURN_SCRIPT)
+        tx.vout[0] = CTxOut(seed_value - 1000, DUMMY_MIN_OP_RETURN_SCRIPT)
         assert_equal(len(tx.serialize_without_witness()), MIN_STANDARD_TX_NONWITNESS_SIZE)
         self.check_mempool_result(
             result_expected=[{'txid': tx.rehash(), 'allowed': True, 'vsize': tx.get_vsize(), 'fees': { 'base': Decimal('0.00001000')}}],

@@ -47,7 +47,7 @@ class AddressType(enum.Enum):
 b58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 
-def create_deterministic_address_bcrt1_p2tr_op_true():
+def create_deterministic_address_rbtcp1_p2tr_op_true():
     """
     Generates a deterministic bech32m address (segwit v1 output) that
     can be spent with a witness stack of OP_TRUE and the control block

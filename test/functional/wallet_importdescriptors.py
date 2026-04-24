@@ -82,7 +82,7 @@ class ImportDescriptorsTest(BitcoinPurpleTestFramework):
         assert_equal(wpriv.getwalletinfo()['keypoolsize'], 0)
 
         self.log.info('Mining coins')
-        self.generatetoaddress(self.nodes[0], COINBASE_MATURITY + 1, w0.getnewaddress())
+        self.generatetoaddress(self.nodes[0], COINBASE_MATURITY + 200, w0.getnewaddress())
 
         # RPC importdescriptors -----------------------------------------------
 
@@ -194,7 +194,7 @@ class ImportDescriptorsTest(BitcoinPurpleTestFramework):
         # # Test ranged descriptors
         xpriv = "tprv8ZgxMBicQKsPeuVhWwi6wuMQGfPKi9Li5GtX35jVNknACgqe3CY4g5xgkfDDJcmtF7o1QnxWDRYw4H5P26PXq7sbcUkEqeR4fg3Kxp2tigg"
         xpub = "tpubD6NzVbkrYhZ4YNXVQbNhMK1WqguFsUXceaVJKbmno2aZ3B6QfbMeraaYvnBSGpV3vxLyTTK9DYT1yoEck4XUScMzXoQ2U2oSmE2JyMedq3H"
-        addresses = ["2N7yv4p8G8yEaPddJxY41kPihnWvs39qCMf", "2MsHxyb2JS3pAySeNUsJ7mNnurtpeenDzLA"] # hdkeypath=m/0'/0'/0' and 1'
+        addresses = ["PPKsEW6e2Xu35Wy6WP65NiLn3Pbrq86gaL", "P8dv9GzgKcUdfKzA2iLBPhQz7mVeMSCTLt"] # hdkeypath=m/0'/0'/0' and 1'
         addresses += ["rbtcp1qrd3n235cj2czsfmsuvqqpr3lu6lg0ju7cz9ftr", "rbtcp1qfqeppuvj0ww98r6qghmdkj70tv8qpchelrjdth"] # wpkh subscripts corresponding to the above addresses
         desc = "sh(wpkh(" + xpub + "/0/0/*" + "))"
 
@@ -395,8 +395,8 @@ class ImportDescriptorsTest(BitcoinPurpleTestFramework):
         assert_raises_rpc_error(-4, 'This wallet has no available keys', w1.getrawchangeaddress, 'legacy')
 
         # # Test importing a descriptor containing a WIF private key
-        wif_priv = "cTe1f5rdT8A8DFgVWTjyPwACsDPJM9ff4QngFxUixCSvvbg1x6sh"
-        address = "2MuhcG52uHPknxDgmGPsV18jSHFBnnRgjPg"
+        wif_priv = "UBAhe3gFeWrReGwUYDdxpBrvvt8mbiUwwfuNvX5RTQF5A4XJW3Vk"
+        address = "PB3ZRm1HAxRFe72YpEuYdTMWY7rnYUhs95"
         desc = "sh(wpkh(" + wif_priv + "))"
         self.log.info("Should import a descriptor with a WIF private key as spendable")
         self.test_importdesc({"desc": descsum_create(desc),
@@ -411,9 +411,11 @@ class ImportDescriptorsTest(BitcoinPurpleTestFramework):
                      address,
                      solvable=True,
                      ismine=True)
-        txid = w0.sendtoaddress(address, 49.99995540)
+        txid = w0.sendtoaddress(address, 0.9)
         self.generatetoaddress(self.nodes[0], 6, w0.getnewaddress())
-        tx = wpriv.createrawtransaction([{"txid": txid, "vout": 0}], {w0.getnewaddress(): 49.999})
+        # find the output vout for our WIF address in the confirmed tx
+        vout = next(d['vout'] for d in wpriv.gettransaction(txid)['details'] if d.get('category') == 'receive')
+        tx = wpriv.createrawtransaction([{"txid": txid, "vout": vout}], {w0.getnewaddress(): 0.899})
         signed_tx = wpriv.signrawtransactionwithwallet(tx)
         w1.sendrawtransaction(signed_tx['hex'])
 
@@ -691,8 +693,9 @@ class ImportDescriptorsTest(BitcoinPurpleTestFramework):
         descriptor["next_index"] = 0
 
         encrypted_wallet.walletpassphrase("passphrase", 99999)
+        genesis_hash = self.nodes[0].getblockhash(0)
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as thread:
-            with self.nodes[0].assert_debug_log(expected_msgs=["Rescan started from block 0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206... (slow variant inspecting all blocks)"], timeout=5):
+            with self.nodes[0].assert_debug_log(expected_msgs=[f"Rescan started from block {genesis_hash}... (slow variant inspecting all blocks)"], timeout=5):
                 importing = thread.submit(encrypted_wallet.importdescriptors, requests=[descriptor])
 
             # Set the passphrase timeout to 1 to test that the wallet remains unlocked during the rescan

@@ -99,6 +99,13 @@ class AvoidReuseTest(BitcoinPurpleTestFramework):
         reset_balance(self.nodes[1], self.nodes[0].getnewaddress())
         self.test_all_destination_groups_are_used()
 
+    def send_reused_outputs(self, address, count, amount):
+        for i in range(count):
+            self.nodes[0].sendtoaddress(address, amount)
+            if (i + 1) % 20 == 0:
+                self.generate(self.nodes[0], 1)
+        self.generate(self.nodes[0], 1)
+
     def test_persistence(self):
         '''Test that wallet files persist the avoid_reuse flag.'''
         self.log.info("Test wallet files persist avoid_reuse flag")
@@ -308,19 +315,16 @@ class AvoidReuseTest(BitcoinPurpleTestFramework):
         ret_addr = self.nodes[0].getnewaddress()
 
         # send multiple transactions, reusing one address
-        for _ in range(101):
-            self.nodes[0].sendtoaddress(new_addr, 1)
-
-        self.generate(self.nodes[0], 1)
+        self.send_reused_outputs(new_addr, 101, 0.01)
 
         # send transaction that should not use all the available outputs
         # per the current coin selection algorithm
-        self.nodes[1].sendtoaddress(ret_addr, 5)
+        self.nodes[1].sendtoaddress(ret_addr, 0.05)
 
         # getbalances and listunspent should show the remaining outputs
         # in the reused address as used/reused
-        assert_unspent(self.nodes[1], total_count=2, total_sum=96, reused_count=1, reused_sum=1, margin=0.01)
-        assert_balances(self.nodes[1], mine={"used": 1, "trusted": 95}, margin=0.01)
+        assert_unspent(self.nodes[1], total_count=2, total_sum=0.96, reused_count=1, reused_sum=0.01, margin=0.01)
+        assert_balances(self.nodes[1], mine={"used": 0.01, "trusted": 0.95}, margin=0.01)
 
     def test_full_destination_group_is_preferred(self):
         '''
@@ -338,15 +342,12 @@ class AvoidReuseTest(BitcoinPurpleTestFramework):
         new_addr = self.nodes[1].getnewaddress()
         ret_addr = self.nodes[0].getnewaddress()
 
-        # Send 101 outputs of 1 BTCP to the same, reused address in the wallet
-        for _ in range(101):
-            self.nodes[0].sendtoaddress(new_addr, 1)
-
-        self.generate(self.nodes[0], 1)
+        # Send 101 outputs of 0.01 BTCP to the same, reused address in the wallet
+        self.send_reused_outputs(new_addr, 101, 0.01)
 
         # Sending a transaction that is smaller than each one of the
         # available outputs
-        txid = self.nodes[1].sendtoaddress(address=ret_addr, amount=0.5)
+        txid = self.nodes[1].sendtoaddress(address=ret_addr, amount=0.005)
         inputs = self.nodes[1].getrawtransaction(txid, 1)["vin"]
 
         # The transaction should use 100 inputs exactly
@@ -366,15 +367,12 @@ class AvoidReuseTest(BitcoinPurpleTestFramework):
         new_addr = self.nodes[1].getnewaddress()
         ret_addr = self.nodes[0].getnewaddress()
 
-        # Send 202 outputs of 1 BTCP to the same, reused address in the wallet
-        for _ in range(202):
-            self.nodes[0].sendtoaddress(new_addr, 1)
-
-        self.generate(self.nodes[0], 1)
+        # Send 202 outputs of 0.01 BTCP to the same, reused address in the wallet
+        self.send_reused_outputs(new_addr, 202, 0.01)
 
         # Sending a transaction that needs to use the full groups
         # of 100 inputs but also the incomplete group of 2 inputs.
-        txid = self.nodes[1].sendtoaddress(address=ret_addr, amount=200.5)
+        txid = self.nodes[1].sendtoaddress(address=ret_addr, amount=2.005)
         inputs = self.nodes[1].getrawtransaction(txid, 1)["vin"]
 
         # The transaction should use 202 inputs exactly

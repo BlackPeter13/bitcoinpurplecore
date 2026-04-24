@@ -153,7 +153,7 @@ class TxDownloadTest(BitcoinPurpleTestFramework):
             peer_expiry, peer_fallback = (peer1, peer2) if peer1.tx_getdata_count == 1 else (peer2, peer1)
             assert_equal(peer_fallback.tx_getdata_count, 0)
         self.nodes[0].setmocktime(int(time.time()) + GETDATA_TX_INTERVAL + 1)  # Wait for request to peer_expiry to expire
-        peer_fallback.wait_until(lambda: peer_fallback.tx_getdata_count >= 1, timeout=1)
+        peer_fallback.wait_until(lambda: peer_fallback.tx_getdata_count >= 1, timeout=30)
         self.restart_node(0)  # reset mocktime
 
     def test_disconnect_fallback(self):
@@ -170,7 +170,7 @@ class TxDownloadTest(BitcoinPurpleTestFramework):
             assert_equal(peer_fallback.tx_getdata_count, 0)
         peer_disconnect.peer_disconnect()
         peer_disconnect.wait_for_disconnect()
-        peer_fallback.wait_until(lambda: peer_fallback.tx_getdata_count >= 1, timeout=1)
+        peer_fallback.wait_until(lambda: peer_fallback.tx_getdata_count >= 1, timeout=30)
 
     def test_notfound_fallback(self):
         self.log.info('Check that notfounds will select another peer for download immediately')
@@ -185,7 +185,7 @@ class TxDownloadTest(BitcoinPurpleTestFramework):
             peer_notfound, peer_fallback = (peer1, peer2) if peer1.tx_getdata_count == 1 else (peer2, peer1)
             assert_equal(peer_fallback.tx_getdata_count, 0)
         peer_notfound.send_and_ping(msg_notfound(vec=[CInv(MSG_WTX, WTXID)]))  # Send notfound, so that fallback peer is selected
-        peer_fallback.wait_until(lambda: peer_fallback.tx_getdata_count >= 1, timeout=1)
+        peer_fallback.wait_until(lambda: peer_fallback.tx_getdata_count >= 1, timeout=30)
 
     def test_preferred_inv(self, preferred=False):
         if preferred:

@@ -263,7 +263,7 @@ class SegWitTest(BitcoinPurpleTestFramework):
         assert_equal(tmpl['weightlimit'], 4000000)
         assert_equal(tmpl['sigoplimit'], 80000)
         assert_equal(tmpl['transactions'][0]['txid'], txid)
-        expected_sigops = 9 if 'txinwitness' in raw_tx["vin"][0] else 8
+        expected_sigops = 10 if 'txinwitness' in raw_tx["vin"][0] else 8
         assert_equal(tmpl['transactions'][0]['sigops'], expected_sigops)
         assert '!segwit' in tmpl['rules']
 
@@ -582,11 +582,11 @@ class SegWitTest(BitcoinPurpleTestFramework):
             self.create_and_mine_tx_from_txids(spendable_txid)
 
             # import all the private keys so solvable addresses become spendable
-            self.nodes[0].importprivkey("cPiM8Ub4heR9NBYmgVzJQiUH1if44GSBGiqaeJySuL2BKxubvgwb")
-            self.nodes[0].importprivkey("cPpAdHaD6VoYbW78kveN2bsvb45Q7G5PhaPApVUGwvF8VQ9brD97")
-            self.nodes[0].importprivkey("91zqCU5B9sdWxzMt1ca3VzbtVm2YM6Hi5Rxn4UDtxEaN9C9nzXV")
-            self.nodes[0].importprivkey("cPQFjcVRpAUBG8BA9hzr2yEzHwKoMgLkJZBBtK9vJnvGJgMjzTbd")
-            self.nodes[0].importprivkey("cQGtcm34xiLjB1v7bkRa4V3aAc9tS2UTuBZ1UnZGeSeNy627fN66")
+            self.nodes[0].importprivkey("U7F37SQgu37SoCokiFtHpyB15PQXJqFU9yxHJsa9QXpKZRqS1gYY")
+            self.nodes[0].importprivkey("U7LrcFPqHtVr2XN7ngYMSraeeipsMptgaqVsV44yT83Girwx2GDx")
+            self.nodes[0].importprivkey("7999KUwPS3kqR3pPF9p6632XDNYKwf6g1dzkQ5hhHYCeWG5BZ9D")
+            self.nodes[0].importprivkey("U6vwiaK41ZAUh9S9BTtqTDwiMc5GcFA3BpHtYskcoziQY9CtteQW")
+            self.nodes[0].importprivkey("U7oabirhA732c3B6dWKZUjkJEGuMgbHknSfi9M9y9eSXCYnbRSNv")
             self.nodes[0].importprivkey("UB2mkNtyFUcbPZ1dETTdJh6Y4X1QWFaXoiVVFLoCc9ezB34B7wQv")
             self.create_and_mine_tx_from_txids(solvable_txid)
 
@@ -622,7 +622,7 @@ class SegWitTest(BitcoinPurpleTestFramework):
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(int('0x' + utxo['txid'], 0), utxo['vout'])))
         for i in script_list:
-            tx.vout.append(CTxOut(10000000, i))
+            tx.vout.append(CTxOut(1000000, i))
         tx.rehash()
         signresults = self.nodes[0].signrawtransactionwithwallet(tx.serialize_without_witness().hex())['hex']
         txid = self.nodes[0].sendrawtransaction(hexstring=signresults, maxfeerate=0)

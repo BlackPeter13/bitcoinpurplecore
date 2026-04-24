@@ -179,7 +179,9 @@ class ReceivedByTest(BitcoinPurpleTestFramework):
         label = "label"
         address = self.nodes[0].getnewaddress(label)
 
-        reward = Decimal("25")
+        height = self.nodes[0].getblockcount() + 1
+        halvings = height // 150  # regtest halving interval
+        reward = Decimal(1) / Decimal(2 ** halvings)
         self.generatetoaddress(self.nodes[0], 1, address)
         hash = self.nodes[0].getbestblockhash()
 
