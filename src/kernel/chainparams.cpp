@@ -101,8 +101,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TAPROOT].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_TAPROOT].min_activation_height = 0; 
 
-        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000100010");
-        consensus.defaultAssumeValid = uint256S("0x000003823fbf82ea4906cbe214617ce7a70a5da29c19ecb1d65618bcf04ec015"); 
+        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000074e7000dc41ac550926");
+        consensus.defaultAssumeValid = uint256S("0x00000000000009733cf805e87e19261ae833319b874c694d4d74995ea526c968");
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -176,11 +176,11 @@ public:
         };
 
         chainTxData = ChainTxData{
-            // Data from RPC: getchaintxstats 4096 000000000000061d99da8846f32e810efdce554c0429e7e7cdde49863578e927
-            // Collected from fully synced mainnet node at block 917,081 (Jan 2026)
-            .nTime    = 1768648137,   // Block 917,081 timestamp
-            .nTxCount = 1039113,      // Total transactions at this block
-            .dTxRate  = 0.01935784,   // Actual tx rate from last 4096 blocks (~1.16 tx/min)
+            // Data from RPC: getchaintxstats 4096 00000000000009733cf805e87e19261ae833319b874c694d4d74995ea526c968
+            // Collected from fully synced mainnet node at block 1,048,808 (Apr 2026)
+            .nTime    = 1777130244,   // Block 1,048,808 timestamp
+            .nTxCount = 1189400,      // Total transactions at this block
+            .dTxRate  = 0.01706534,   // Actual tx rate from last 4096 blocks (~1.02 tx/min)
         };
     }
 };
