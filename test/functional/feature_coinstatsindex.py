@@ -54,7 +54,7 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
         self._test_index_rejects_hash_serialized()
 
     def block_sanity_check(self, block_info):
-        block_subsidy = 50
+        block_subsidy = 1
         assert_equal(
             block_info['prevout_spent'] + block_subsidy,
             block_info['new_outputs_ex_coinbase'] + block_info['coinbase'] + block_info['unspendable']
@@ -112,14 +112,14 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
         for hash_option in index_hash_options:
             # Genesis block is unspendable
             res4 = index_node.gettxoutsetinfo(hash_option, 0)
-            assert_equal(res4['total_unspendable_amount'], 50)
+            assert_equal(res4['total_unspendable_amount'], 1)
             assert_equal(res4['block_info'], {
-                'unspendable': 50,
+                'unspendable': 1,
                 'prevout_spent': 0,
                 'new_outputs_ex_coinbase': 0,
                 'coinbase': 0,
                 'unspendables': {
-                    'genesis_block': 50,
+                    'genesis_block': 1,
                     'bip30': 0,
                     'scripts': 0,
                     'unclaimed_rewards': 0
@@ -129,12 +129,12 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
 
             # Test an older block height that included a normal tx
             res5 = index_node.gettxoutsetinfo(hash_option, 102)
-            assert_equal(res5['total_unspendable_amount'], 50)
+            assert_equal(res5['total_unspendable_amount'], 1)
             assert_equal(res5['block_info'], {
                 'unspendable': 0,
-                'prevout_spent': 50,
-                'new_outputs_ex_coinbase': Decimal('49.99968800'),
-                'coinbase': Decimal('50.00031200'),
+                'prevout_spent': 1,
+                'new_outputs_ex_coinbase': Decimal('0.99968800'),
+                'coinbase': Decimal('1.00031200'),
                 'unspendables': {
                     'genesis_block': 0,
                     'bip30': 0,
@@ -144,19 +144,20 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
             })
             self.block_sanity_check(res5['block_info'])
 
-        # Generate and send a normal tx with two outputs
+        # Generate and send a normal tx with two outputs. BitcoinPurple regtest
+        # subsidy is 1 BTCP here, so keep the spend below a single coinbase.
         tx1_txid, tx1_vout = self.wallet.send_to(
             from_node=node,
             scriptPubKey=self.wallet.get_scriptPubKey(),
-            amount=21 * COIN,
+            amount=int(Decimal('0.5') * COIN),
         )
 
-        # Find the right position of the 21 BTCP output
-        tx1_out_21 = self.wallet.get_utxo(txid=tx1_txid, vout=tx1_vout)
+        # Find the right position of the 0.5 BTCP output
+        tx1_out = self.wallet.get_utxo(txid=tx1_txid, vout=tx1_vout)
 
         # Generate and send another tx with an OP_RETURN output (which is unspendable)
-        tx2 = self.wallet.create_self_transfer(utxo_to_spend=tx1_out_21)['tx']
-        tx2_val = '20.99'
+        tx2 = self.wallet.create_self_transfer(utxo_to_spend=tx1_out)['tx']
+        tx2_val = '0.49'
         tx2.vout = [CTxOut(int(Decimal(tx2_val) * COIN), CScript([OP_RETURN] + [OP_FALSE] * 30))]
         tx2_hex = tx2.serialize().hex()
         self.nodes[0].sendrawtransaction(tx2_hex, 0, tx2_val)
@@ -167,16 +168,16 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
         for hash_option in index_hash_options:
             # Check all amounts were registered correctly
             res6 = index_node.gettxoutsetinfo(hash_option, 108)
-            assert_equal(res6['total_unspendable_amount'], Decimal('70.99000000'))
+            assert_equal(res6['total_unspendable_amount'], Decimal('1.49000000'))
             assert_equal(res6['block_info'], {
-                'unspendable': Decimal('20.99000000'),
-                'prevout_spent': 71,
-                'new_outputs_ex_coinbase': Decimal('49.99999000'),
-                'coinbase': Decimal('50.01001000'),
+                'unspendable': Decimal('0.49000000'),
+                'prevout_spent': Decimal('1.50000000'),
+                'new_outputs_ex_coinbase': Decimal('0.99999000'),
+                'coinbase': Decimal('1.01001000'),
                 'unspendables': {
                     'genesis_block': 0,
                     'bip30': 0,
-                    'scripts': Decimal('20.99000000'),
+                    'scripts': Decimal('0.49000000'),
                     'unclaimed_rewards': 0,
                 }
             })
@@ -184,8 +185,8 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
 
         # Create a coinbase that does not claim full subsidy and also
         # has two outputs
-        cb = create_coinbase(109, nValue=35)
-        cb.vout.append(CTxOut(5 * COIN, CScript([OP_FALSE])))
+        cb = create_coinbase(109, nValue=0)
+        cb.vout.append(CTxOut(int(Decimal('0.4') * COIN), CScript([OP_FALSE])))
         cb.rehash()
 
         # Generate a block that includes previous coinbase
@@ -198,17 +199,17 @@ class CoinStatsIndexTest(BitcoinPurpleTestFramework):
 
         for hash_option in index_hash_options:
             res7 = index_node.gettxoutsetinfo(hash_option, 109)
-            assert_equal(res7['total_unspendable_amount'], Decimal('80.99000000'))
+            assert_equal(res7['total_unspendable_amount'], Decimal('2.09000000'))
             assert_equal(res7['block_info'], {
-                'unspendable': 10,
+                'unspendable': Decimal('0.60000000'),
                 'prevout_spent': 0,
                 'new_outputs_ex_coinbase': 0,
-                'coinbase': 40,
+                'coinbase': Decimal('0.40000000'),
                 'unspendables': {
                     'genesis_block': 0,
                     'bip30': 0,
                     'scripts': 0,
-                    'unclaimed_rewards': 10
+                    'unclaimed_rewards': Decimal('0.60000000')
                 }
             })
             self.block_sanity_check(res7['block_info'])

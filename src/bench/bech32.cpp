@@ -18,14 +18,14 @@ static void Bech32Encode(benchmark::Bench& bench)
     tmp.reserve(1 + 32 * 8 / 5);
     ConvertBits<8, 5, true>([&](unsigned char c) { tmp.push_back(c); }, v.begin(), v.end());
     bench.batch(v.size()).unit("byte").run([&] {
-        bech32::Encode(bech32::Encoding::BECH32, "bc", tmp);
+        bech32::Encode(bech32::Encoding::BECH32, "btcp", tmp);
     });
 }
 
 
 static void Bech32Decode(benchmark::Bench& bench)
 {
-    std::string addr = "bc1qkallence7tjawwvy0dwt4twc62qjgaw8f4vlhyd006d99f09";
+    std::string addr = "btcp1qe9l45elv8qdhvzh27e6h80qkfpzl7wdrhvn2rnhyqxkxwfpmfrdsqsemh0";
     bench.batch(addr.size()).unit("byte").run([&] {
         bech32::Decode(addr);
     });

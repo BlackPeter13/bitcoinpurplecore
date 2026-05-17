@@ -10,6 +10,7 @@ RPCs tested are:
     - setlabel
 """
 from collections import defaultdict
+from decimal import Decimal
 
 from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.test_framework import BitcoinPurpleTestFramework
@@ -30,7 +31,7 @@ class WalletLabelsTest(BitcoinPurpleTestFramework):
 
     def invalid_label_name_test(self):
         node = self.nodes[0]
-        address = node.getnewaddress()
+        address = node.getnewaddress('', 'bech32')
         pubkey = node.getaddressinfo(address)['pubkey']
         rpc_calls = [
             [node.getnewaddress],
@@ -76,13 +77,13 @@ class WalletLabelsTest(BitcoinPurpleTestFramework):
         assert_raises_rpc_error(-8, "Invalid 'purpose' argument, must be a known purpose string, typically 'send', or 'receive'.", node.listlabels, "unknown")
 
         # Note each time we call generate, all generated coins go into
-        # the same address, so we call twice to get two addresses w/50 each
-        self.generatetoaddress(node, nblocks=1, address=node.getnewaddress(label='coinbase'))
-        self.generatetoaddress(node, nblocks=COINBASE_MATURITY + 1, address=node.getnewaddress(label='coinbase'))
-        assert_equal(node.getbalance(), 100)
+        # the same address, so we call twice to get two addresses w/1 BTCP each.
+        self.generatetoaddress(node, nblocks=1, address=node.getnewaddress(label='coinbase', address_type='bech32'))
+        self.generatetoaddress(node, nblocks=COINBASE_MATURITY + 1, address=node.getnewaddress(label='coinbase', address_type='bech32'))
+        assert_equal(node.getbalance(), 2)
 
         # there should be 2 address groups
-        # each with 1 address with a balance of 50 BitcoinPurples
+        # each with 1 address with a balance of 1 BitcoinPurple
         address_groups = node.listaddressgroupings()
         assert_equal(len(address_groups), 2)
         # the addresses aren't linked now, but will be after we send to the
@@ -91,14 +92,14 @@ class WalletLabelsTest(BitcoinPurpleTestFramework):
         for address_group in address_groups:
             assert_equal(len(address_group), 1)
             assert_equal(len(address_group[0]), 3)
-            assert_equal(address_group[0][1], 50)
+            assert_equal(address_group[0][1], 1)
             assert_equal(address_group[0][2], 'coinbase')
             linked_addresses.add(address_group[0][0])
 
-        # send 50 from each address to a third address not in this wallet
-        common_address = "msf4WtN1YQKXvNtvdFYt9JBnUD2FB41kjr"
+        # send 1 from each address to a third address not in this wallet
+        common_address = "Pk4tMuyAVUqLwYEAHBEMUQDWrTrN4pff4G"
         node.sendmany(
-            amounts={common_address: 100},
+            amounts={common_address: 2},
             subtractfeefrom=[common_address],
             minconf=1,
         )
@@ -115,18 +116,18 @@ class WalletLabelsTest(BitcoinPurpleTestFramework):
         # we want to reset so that the "" label has what's expected.
         # otherwise we're off by exactly the fee amount as that's mined
         # and matures in the next 100 blocks
-        amount_to_send = 1.0
+        amount_to_send = Decimal('0.1')
 
         # Create labels and make sure subsequent label API calls
         # recognize the label/address associations.
         labels = [Label(name) for name in ("a", "b", "c", "d", "e")]
         for label in labels:
-            address = node.getnewaddress(label.name)
+            address = node.getnewaddress(label.name, 'bech32')
             label.add_receive_address(address)
             label.verify(node)
 
         # Check listlabels when passing 'purpose'
-        node2_addr = self.nodes[1].getnewaddress()
+        node2_addr = self.nodes[1].getnewaddress('', 'bech32')
         node.setlabel(node2_addr, "node2_addr")
         assert_equal(node.listlabels(purpose="send"), ["node2_addr"])
         assert_equal(node.listlabels(purpose="receive"), sorted(['coinbase'] + [label.name for label in labels]))
@@ -151,16 +152,16 @@ class WalletLabelsTest(BitcoinPurpleTestFramework):
             node.sendtoaddress(to_label.addresses[0], amount_to_send)
         self.generate(node, 1)
         for label in labels:
-            address = node.getnewaddress(label.name)
+            address = node.getnewaddress(label.name, 'bech32')
             label.add_receive_address(address)
             label.verify(node)
-            assert_equal(node.getreceivedbylabel(label.name), 2)
+            assert_equal(node.getreceivedbylabel(label.name), amount_to_send * 2)
             label.verify(node)
         self.generate(node, COINBASE_MATURITY + 1)
 
         # Check that setlabel can assign a label to a new unused address.
         for label in labels:
-            address = node.getnewaddress()
+            address = node.getnewaddress('', 'bech32')
             node.setlabel(address, label.name)
             label.add_address(address)
             label.verify(node)
@@ -171,8 +172,8 @@ class WalletLabelsTest(BitcoinPurpleTestFramework):
             for label in labels:
                 addresses = []
                 for _ in range(10):
-                    addresses.append(node.getnewaddress())
-                multisig_address = node.addmultisigaddress(5, addresses, label.name)['address']
+                    addresses.append(node.getnewaddress('', 'legacy'))
+                multisig_address = node.addmultisigaddress(5, addresses, label.name, 'legacy')['address']
                 label.add_address(multisig_address)
                 label.purpose[multisig_address] = "send"
                 label.verify(node)
@@ -194,13 +195,13 @@ class WalletLabelsTest(BitcoinPurpleTestFramework):
             node.createwallet(wallet_name='watch_only', disable_private_keys=True)
             wallet_watch_only = node.get_wallet_rpc('watch_only')
             BECH32_VALID = {
-                '✔️_VER15_PROG40': 'bcrt10qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqxkg7fn',
-                '✔️_VER16_PROG03': 'bcrt1sqqqqq8uhdgr',
-                '✔️_VER16_PROB02': 'bcrt1sqqqq4wstyw',
+                '✔️_VER15_PROG40': 'rbtcp10qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqrqcp6l',
+                '✔️_VER16_PROG03': 'rbtcp1sqqqqq7zepj6',
+                '✔️_VER16_PROB02': 'rbtcp1sqqqqtq52er',
             }
             BECH32_INVALID = {
-                '❌_VER15_PROG41': 'bcrt1sqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqajlxj8',
-                '❌_VER16_PROB01': 'bcrt1sqq5r4036',
+                '❌_VER15_PROG41': 'rbtcp1sqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq73a74a',
+                '❌_VER16_PROB01': 'rbtcp1sqqv2dgqn',
             }
             for l in BECH32_VALID:
                 ad = BECH32_VALID[l]

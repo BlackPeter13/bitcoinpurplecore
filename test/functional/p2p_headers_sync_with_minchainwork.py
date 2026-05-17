@@ -52,6 +52,7 @@ class RejectLowDifficultyHeadersTest(BitcoinPurpleTestFramework):
         self.log.info("Generate blocks on the node with no required chainwork, and verify nodes 1 and 2 have no new headers in their headers tree")
         with self.nodes[1].assert_debug_log(expected_msgs=["[net] Ignoring low-work chain (height=14)"]), self.nodes[2].assert_debug_log(expected_msgs=["[net] Ignoring low-work chain (height=14)"]), self.nodes[3].assert_debug_log(expected_msgs=["Synchronizing blockheaders, height: 14"]):
             self.generate(self.nodes[0], NODE1_BLOCKS_REQUIRED-1, sync_fun=self.no_op)
+        genesis_hash = self.nodes[1].getblockhash(0)
 
         # Node3 should always allow headers due to noban permissions
         self.log.info("Check that node3 will sync headers (due to noban permissions)")
@@ -73,7 +74,7 @@ class RejectLowDifficultyHeadersTest(BitcoinPurpleTestFramework):
             assert len(chaintips) == 1
             assert {
                 'height': 0,
-                'hash': '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206',
+                'hash': genesis_hash,
                 'branchlen': 0,
                 'status': 'active',
             } in chaintips
@@ -85,7 +86,7 @@ class RejectLowDifficultyHeadersTest(BitcoinPurpleTestFramework):
 
         assert {
             'height': 0,
-            'hash': '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206',
+            'hash': genesis_hash,
             'branchlen': 0,
             'status': 'active',
         } in self.nodes[2].getchaintips()

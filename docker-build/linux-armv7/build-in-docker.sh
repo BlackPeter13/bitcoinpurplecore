@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ###############################################################################
 # BitcoinPurple Core - Linux ARMv7 Cross-Compilation Script (runs inside Docker)
 ###############################################################################
 
+export LC_ALL=C
 set -e
 
 # Colors

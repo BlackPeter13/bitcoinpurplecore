@@ -5311,6 +5311,8 @@ bool ChainstateManager::PopulateAndValidateSnapshot(
 
     // Assert that the deserialized chainstate contents match the expected assumeutxo value.
     if (AssumeutxoHash{maybe_stats->hashSerialized} != au_data.hash_serialized) {
+        LogPrintf("[snapshot] HASH_CAPTURE height=%d got=%s\n",
+            base_height, maybe_stats->hashSerialized.ToString());
         LogPrintf("[snapshot] bad snapshot content hash: expected %s, got %s\n",
             au_data.hash_serialized.ToString(), maybe_stats->hashSerialized.ToString());
         return false;

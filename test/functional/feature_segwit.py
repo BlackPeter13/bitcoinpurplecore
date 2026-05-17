@@ -115,13 +115,13 @@ class SegWitTest(BitcoinPurpleTestFramework):
         self.sync_all()
 
     def success_mine(self, node, txid, sign, redeem_script=""):
-        send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("49.998"), sign, redeem_script)
+        send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("0.998"), sign, redeem_script)
         block = self.generate(node, 1)
         assert_equal(len(node.getblock(block[0])["tx"]), 2)
         self.sync_blocks()
 
     def fail_accept(self, node, error_msg, txid, sign, redeem_script=""):
-        assert_raises_rpc_error(-26, error_msg, send_to_witness, use_p2wsh=1, node=node, utxo=getutxo(txid), pubkey=self.pubkey[0], encode_p2sh=False, amount=Decimal("49.998"), sign=sign, insert_redeem_script=redeem_script)
+        assert_raises_rpc_error(-26, error_msg, send_to_witness, use_p2wsh=1, node=node, utxo=getutxo(txid), pubkey=self.pubkey[0], encode_p2sh=False, amount=Decimal("0.998"), sign=sign, insert_redeem_script=redeem_script)
 
     def run_test(self):
         self.generate(self.nodes[0], 161)  # block 161
@@ -184,15 +184,15 @@ class SegWitTest(BitcoinPurpleTestFramework):
         for _ in range(5):
             for n in range(3):
                 for v in range(2):
-                    wit_ids[n][v].append(send_to_witness(v, self.nodes[0], find_spendable_utxo(self.nodes[0], 50), self.pubkey[n], False, Decimal("49.999")))
-                    p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], find_spendable_utxo(self.nodes[0], 50), self.pubkey[n], True, Decimal("49.999")))
+                    wit_ids[n][v].append(send_to_witness(v, self.nodes[0], find_spendable_utxo(self.nodes[0], 1), self.pubkey[n], False, Decimal("0.999")))
+                    p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], find_spendable_utxo(self.nodes[0], 1), self.pubkey[n], True, Decimal("0.999")))
 
         self.generate(self.nodes[0], 1)  # block 163
 
         # Make sure all nodes recognize the transactions as theirs
-        assert_equal(self.nodes[0].getbalance(), balance_presetup - 60 * 50 + 20 * Decimal("49.999") + 50)
-        assert_equal(self.nodes[1].getbalance(), 20 * Decimal("49.999"))
-        assert_equal(self.nodes[2].getbalance(), 20 * Decimal("49.999"))
+        assert_equal(self.nodes[0].getbalance(), balance_presetup - 60 * 1 + 20 * Decimal("0.999") + 1)
+        assert_equal(self.nodes[1].getbalance(), 20 * Decimal("0.999"))
+        assert_equal(self.nodes[2].getbalance(), 20 * Decimal("0.999"))
 
         self.log.info("Verify unsigned p2sh witness txs without a redeem script are invalid")
         self.fail_accept(self.nodes[2], "mandatory-script-verify-flag-failed (Operation not valid with the current stack size)", p2sh_ids[NODE_2][P2WPKH][1], sign=False)
@@ -202,10 +202,10 @@ class SegWitTest(BitcoinPurpleTestFramework):
 
         self.log.info("Verify witness txs are mined as soon as segwit activates")
 
-        send_to_witness(1, self.nodes[2], getutxo(wit_ids[NODE_2][P2WPKH][0]), self.pubkey[0], encode_p2sh=False, amount=Decimal("49.998"), sign=True)
-        send_to_witness(1, self.nodes[2], getutxo(wit_ids[NODE_2][P2WSH][0]), self.pubkey[0], encode_p2sh=False, amount=Decimal("49.998"), sign=True)
-        send_to_witness(1, self.nodes[2], getutxo(p2sh_ids[NODE_2][P2WPKH][0]), self.pubkey[0], encode_p2sh=False, amount=Decimal("49.998"), sign=True)
-        send_to_witness(1, self.nodes[2], getutxo(p2sh_ids[NODE_2][P2WSH][0]), self.pubkey[0], encode_p2sh=False, amount=Decimal("49.998"), sign=True)
+        send_to_witness(1, self.nodes[2], getutxo(wit_ids[NODE_2][P2WPKH][0]), self.pubkey[0], encode_p2sh=False, amount=Decimal("0.998"), sign=True)
+        send_to_witness(1, self.nodes[2], getutxo(wit_ids[NODE_2][P2WSH][0]), self.pubkey[0], encode_p2sh=False, amount=Decimal("0.998"), sign=True)
+        send_to_witness(1, self.nodes[2], getutxo(p2sh_ids[NODE_2][P2WPKH][0]), self.pubkey[0], encode_p2sh=False, amount=Decimal("0.998"), sign=True)
+        send_to_witness(1, self.nodes[2], getutxo(p2sh_ids[NODE_2][P2WSH][0]), self.pubkey[0], encode_p2sh=False, amount=Decimal("0.998"), sign=True)
 
         assert_equal(len(self.nodes[2].getrawmempool()), 4)
         blockhash = self.generate(self.nodes[2], 1)[0]  # block 165 (first block with new rules)
@@ -263,7 +263,7 @@ class SegWitTest(BitcoinPurpleTestFramework):
         assert_equal(tmpl['weightlimit'], 4000000)
         assert_equal(tmpl['sigoplimit'], 80000)
         assert_equal(tmpl['transactions'][0]['txid'], txid)
-        expected_sigops = 9 if 'txinwitness' in raw_tx["vin"][0] else 8
+        expected_sigops = 10 if 'txinwitness' in raw_tx["vin"][0] else 8
         assert_equal(tmpl['transactions'][0]['sigops'], expected_sigops)
         assert '!segwit' in tmpl['rules']
 
@@ -274,7 +274,7 @@ class SegWitTest(BitcoinPurpleTestFramework):
         #                      tx2 (segwit input, paying to a non-segwit output) ->
         #                      tx3 (non-segwit input, paying to a non-segwit output).
         # tx1 is allowed to appear in the block, but no others.
-        txid1 = send_to_witness(1, self.nodes[0], find_spendable_utxo(self.nodes[0], 50), self.pubkey[0], False, Decimal("49.996"))
+        txid1 = send_to_witness(1, self.nodes[0], find_spendable_utxo(self.nodes[0], 1), self.pubkey[0], False, Decimal("0.996"))
         hex_tx = self.nodes[0].gettransaction(txid)['hex']
         tx = tx_from_hex(hex_tx)
         assert tx.wit.is_null()  # This should not be a segwit input
@@ -293,7 +293,7 @@ class SegWitTest(BitcoinPurpleTestFramework):
         # Now create tx2, which will spend from txid1.
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(int(txid1, 16), 0), b''))
-        tx.vout.append(CTxOut(int(49.99 * COIN), CScript([OP_TRUE, OP_DROP] * 15 + [OP_TRUE])))
+        tx.vout.append(CTxOut(int(0.99 * COIN), CScript([OP_TRUE, OP_DROP] * 15 + [OP_TRUE])))
         tx2_hex = self.nodes[0].signrawtransactionwithwallet(tx.serialize().hex())['hex']
         txid2 = self.nodes[0].sendrawtransaction(tx2_hex)
         tx = tx_from_hex(tx2_hex)
@@ -309,7 +309,7 @@ class SegWitTest(BitcoinPurpleTestFramework):
         # Now create tx3, which will spend from txid2
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(int(txid2, 16), 0), b""))
-        tx.vout.append(CTxOut(int(49.95 * COIN), CScript([OP_TRUE, OP_DROP] * 15 + [OP_TRUE])))  # Huge fee
+        tx.vout.append(CTxOut(int(0.95 * COIN), CScript([OP_TRUE, OP_DROP] * 15 + [OP_TRUE])))  # Huge fee
         tx.calc_sha256()
         txid3 = self.nodes[0].sendrawtransaction(hexstring=tx.serialize().hex(), maxfeerate=0)
         assert tx.wit.is_null()
@@ -342,15 +342,15 @@ class SegWitTest(BitcoinPurpleTestFramework):
                 "04A47F2CBCEFFA7B9BCDA184E7D5668D3DA6F9079AD41E422FA5FD7B2D458F2538A62F5BD8EC85C2477F39650BD391EA6250207065B2A81DA8B009FC891E898F0E",  # 91zqCU5B9sdWxzMt1ca3VzbtVm2YM6Hi5Rxn4UDtxEaN9C9nzXV
                 "02A47F2CBCEFFA7B9BCDA184E7D5668D3DA6F9079AD41E422FA5FD7B2D458F2538",  # cPQFjcVRpAUBG8BA9hzr2yEzHwKoMgLkJZBBtK9vJnvGJgMjzTbd
                 "036722F784214129FEB9E8129D626324F3F6716555B603FFE8300BBCB882151228",  # cQGtcm34xiLjB1v7bkRa4V3aAc9tS2UTuBZ1UnZGeSeNy627fN66
-                "0266A8396EE936BF6D99D17920DB21C6C7B1AB14C639D5CD72B300297E416FD2EC",  # cTW5mR5M45vHxXkeChZdtSPozrFwFgmEvTNnanCW6wrqwaCZ1X7K
+                "0266A8396EE936BF6D99D17920DB21C6C7B1AB14C639D5CD72B300297E416FD2EC",  # UB2mkNtyFUcbPZ1dETTdJh6Y4X1QWFaXoiVVFLoCc9ezB34B7wQv
                 "0450A38BD7F0AC212FEBA77354A9B036A32E0F7C81FC4E0C5ADCA7C549C4505D2522458C2D9AE3CEFD684E039194B72C8A10F9CB9D4764AB26FCC2718D421D3B84",  # 92h2XPssjBpsJN5CqSP7v9a7cf2kgDunBC6PDFwJHMACM1rrVBJ
             ]
 
             # Import a compressed key and an uncompressed key, generate some multisig addresses
-            self.nodes[0].importprivkey("92e6XLo5jVAVwrQKPNTs93oQco8f8sDNBcpv73Dsrs397fQtFQn")
-            uncompressed_spendable_address = ["mvozP4UwyGD2mGZU4D2eMvMLPB9WkMmMQu"]
-            self.nodes[0].importprivkey("cNC8eQ5dg3mFAVePDX4ddmPYpPbw41r9bm2jd1nLJT77e6RrzTRR")
-            compressed_spendable_address = ["mmWQubrDomqpgSYekvsU7HWEVjLFHAakLe"]
+            self.nodes[0].importprivkey("79nQeMfJ1fHpPurpcuhuj6E3LQeSjS2L7prtSehgCAfRUqs5gRK")
+            uncompressed_spendable_address = ["PoDpE666vLiqnRthi8i7h2P4mRydaCcMqP"]
+            self.nodes[0].importprivkey("U5ipdMuFsSTYbWuNFGxd426Gt4MQJafSV29SHaP2oeuFsZHi6AMc")
+            compressed_spendable_address = ["PdvEkdTNkrMdhbstQrYwSPXxszANDDuea5"]
             assert not self.nodes[0].getaddressinfo(uncompressed_spendable_address[0])['iscompressed']
             assert self.nodes[0].getaddressinfo(compressed_spendable_address[0])['iscompressed']
 
@@ -514,10 +514,10 @@ class SegWitTest(BitcoinPurpleTestFramework):
 
             # Repeat some tests. This time we don't add witness scripts with importaddress
             # Import a compressed key and an uncompressed key, generate some multisig addresses
-            self.nodes[0].importprivkey("927pw6RW8ZekycnXqBQ2JS5nPyo1yRfGNN8oq74HeddWSpafDJH")
-            uncompressed_spendable_address = ["mguN2vNSCEUh6rJaXoAVwY3YZwZvEmf5xi"]
-            self.nodes[0].importprivkey("cMcrXaaUC48ZKpcyydfFo8PxHAjpsYLhdsp6nmtB3E2ER9UUHWnw")
-            compressed_spendable_address = ["n1UNmpmbVUJ9ytXYXiurmGPQ3TRrXqPWKL"]
+            self.nodes[0].importprivkey("79G947HiQjn5RgF34ie4tUWR7bJoZzUEJaAnAiY5ywFnp3VqXnR")
+            uncompressed_spendable_address = ["PZKBswyb9JzW81dpBiqyGe5GxCQ383ebvo"]
+            self.nodes[0].importprivkey("U59YWYQ6PSprkqsy1PZFDP6gLqVJ879zX8voTLUsYRpNecNDSBxD")
+            compressed_spendable_address = ["PstCcrNkSYoy13rnBebL6NR8RiFySniUWZ"]
 
             self.nodes[0].importpubkey(pubkeys[5])
             compressed_solvable_address = [key_to_p2pkh(pubkeys[5])]
@@ -582,12 +582,12 @@ class SegWitTest(BitcoinPurpleTestFramework):
             self.create_and_mine_tx_from_txids(spendable_txid)
 
             # import all the private keys so solvable addresses become spendable
-            self.nodes[0].importprivkey("cPiM8Ub4heR9NBYmgVzJQiUH1if44GSBGiqaeJySuL2BKxubvgwb")
-            self.nodes[0].importprivkey("cPpAdHaD6VoYbW78kveN2bsvb45Q7G5PhaPApVUGwvF8VQ9brD97")
-            self.nodes[0].importprivkey("91zqCU5B9sdWxzMt1ca3VzbtVm2YM6Hi5Rxn4UDtxEaN9C9nzXV")
-            self.nodes[0].importprivkey("cPQFjcVRpAUBG8BA9hzr2yEzHwKoMgLkJZBBtK9vJnvGJgMjzTbd")
-            self.nodes[0].importprivkey("cQGtcm34xiLjB1v7bkRa4V3aAc9tS2UTuBZ1UnZGeSeNy627fN66")
-            self.nodes[0].importprivkey("cTW5mR5M45vHxXkeChZdtSPozrFwFgmEvTNnanCW6wrqwaCZ1X7K")
+            self.nodes[0].importprivkey("U7F37SQgu37SoCokiFtHpyB15PQXJqFU9yxHJsa9QXpKZRqS1gYY")
+            self.nodes[0].importprivkey("U7LrcFPqHtVr2XN7ngYMSraeeipsMptgaqVsV44yT83Girwx2GDx")
+            self.nodes[0].importprivkey("7999KUwPS3kqR3pPF9p6632XDNYKwf6g1dzkQ5hhHYCeWG5BZ9D")
+            self.nodes[0].importprivkey("U6vwiaK41ZAUh9S9BTtqTDwiMc5GcFA3BpHtYskcoziQY9CtteQW")
+            self.nodes[0].importprivkey("U7oabirhA732c3B6dWKZUjkJEGuMgbHknSfi9M9y9eSXCYnbRSNv")
+            self.nodes[0].importprivkey("UB2mkNtyFUcbPZ1dETTdJh6Y4X1QWFaXoiVVFLoCc9ezB34B7wQv")
             self.create_and_mine_tx_from_txids(solvable_txid)
 
             # Test that importing native P2WPKH/P2WSH scripts works
@@ -618,11 +618,11 @@ class SegWitTest(BitcoinPurpleTestFramework):
         self.nodes[0].assert_start_raises_init_error(["-rpcserialversion=100"], "Error: Unknown rpcserialversion requested.")
 
     def mine_and_test_listunspent(self, script_list, ismine):
-        utxo = find_spendable_utxo(self.nodes[0], 50)
+        utxo = find_spendable_utxo(self.nodes[0], 1)
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(int('0x' + utxo['txid'], 0), utxo['vout'])))
         for i in script_list:
-            tx.vout.append(CTxOut(10000000, i))
+            tx.vout.append(CTxOut(1000000, i))
         tx.rehash()
         signresults = self.nodes[0].signrawtransactionwithwallet(tx.serialize_without_witness().hex())['hex']
         txid = self.nodes[0].sendrawtransaction(hexstring=signresults, maxfeerate=0)

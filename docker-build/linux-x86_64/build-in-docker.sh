@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ###############################################################################
 # BitcoinPurple Core - Linux x86_64 Build Script (runs inside Docker)
 ###############################################################################
 
+export LC_ALL=C
 set -e
 
 # Colors

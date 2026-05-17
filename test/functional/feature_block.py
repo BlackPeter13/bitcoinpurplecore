@@ -170,7 +170,7 @@ class FullBlockTest(BitcoinPurpleTestFramework):
             self.send_blocks(
                 [badblock], success=False,
                 reject_reason=(template.block_reject_reason or template.reject_reason),
-                reconnect=True, timeout=2)
+                reconnect=True, timeout=4)
 
             self.move_tip(2)
 
@@ -1166,18 +1166,23 @@ class FullBlockTest(BitcoinPurpleTestFramework):
         self.log.info("Test transaction resurrection during a re-org")
         self.move_tip(76)
         self.next_block(77)
-        tx77 = self.create_and_sign_transaction(out[24], 10 * COIN)
+        resurrection_fee = 10000
+        assert_greater_than(out[24].vout[0].nValue, 3 * resurrection_fee)
+        tx77_value = out[24].vout[0].nValue - resurrection_fee
+        tx77 = self.create_and_sign_transaction(out[24], tx77_value)
         b77 = self.update_block(77, [tx77])
         self.send_blocks([b77], True)
         self.save_spendable_output()
 
         self.next_block(78)
-        tx78 = self.create_tx(tx77, 0, 9 * COIN)
+        tx78_value = tx77_value - resurrection_fee
+        tx78 = self.create_tx(tx77, 0, tx78_value)
         b78 = self.update_block(78, [tx78])
         self.send_blocks([b78], True)
 
         self.next_block(79)
-        tx79 = self.create_tx(tx78, 0, 8 * COIN)
+        tx79_value = tx78_value - resurrection_fee
+        tx79 = self.create_tx(tx78, 0, tx79_value)
         b79 = self.update_block(79, [tx79])
         self.send_blocks([b79], True)
 

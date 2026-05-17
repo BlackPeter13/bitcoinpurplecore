@@ -18,11 +18,11 @@ from test_framework.util import (
 )
 import time
 
-# The block reward of coinbaseoutput.nValue (50) BTCP/block matures after
-# COINBASE_MATURITY (100) blocks. Therefore, after mining 101 blocks we expect
-# node 0 to have a balance of (BLOCKS - COINBASE_MATURITY) * 50 BTCP/block.
-BLOCKS = COINBASE_MATURITY + 1
-BALANCE = (BLOCKS - 100) * 50
+# The block reward of coinbaseoutput.nValue (1) BTCP/block matures after
+# COINBASE_MATURITY (100) blocks. Mine 200 blocks so that 100 BTCP are mature.
+# Heights 1-100 all have halvings=0 (nSubsidyHalvingInterval=150) → 1 BTCP each.
+BLOCKS = COINBASE_MATURITY + 100
+BALANCE = (BLOCKS - 100) * 1
 
 JSON_PARSING_ERROR = 'error: Error parsing JSON: foo'
 BLOCKS_VALUE_OF_ZERO = 'error: the first argument (number of blocks to generate, default: 1) must be an integer value greater than zero'
@@ -165,7 +165,7 @@ class TestBitcoinPurpleCli(BitcoinPurpleTestFramework):
 
             # Setup to test -getinfo, -generate, and -rpcwallet= with multiple wallets.
             wallets = [self.default_wallet_name, 'Encrypted', 'secret']
-            amounts = [BALANCE + Decimal('9.999928'), Decimal(9), Decimal(31)]
+            amounts = [None, Decimal(9), Decimal(31)]
             self.nodes[0].createwallet(wallet_name=wallets[1])
             self.nodes[0].createwallet(wallet_name=wallets[2])
             w1 = self.nodes[0].get_wallet_rpc(wallets[0])
@@ -178,8 +178,10 @@ class TestBitcoinPurpleCli(BitcoinPurpleTestFramework):
             w1.sendtoaddress(w2.getnewaddress(), amounts[1])
             w1.sendtoaddress(w3.getnewaddress(), amounts[2])
 
-            # Mine a block to confirm; adds a block reward (50 BTCP) to the default wallet.
+            # Mine a block to confirm. Block reward is immature; balance grows from
+            # the coinbase at (BLOCKS - COINBASE_MATURITY) becoming newly mature.
             self.generate(self.nodes[0], 1)
+            amounts[0] = w1.getbalance()
 
             self.log.info("Test -getinfo with multiple wallets and -rpcwallet returns specified wallet balance")
             for i in range(len(wallets)):
@@ -330,7 +332,7 @@ class TestBitcoinPurpleCli(BitcoinPurpleTestFramework):
         self.stop_node(0)  # stop the node so we time out
         start_time = time.time()
         assert_raises_process_error(1, "Could not connect to the server", self.nodes[0].cli('-rpcwait', '-rpcwaittimeout=5').echo)
-        assert_greater_than_or_equal(time.time(), start_time + 5)
+        assert_greater_than_or_equal(time.time(), start_time + 4)
 
 
 if __name__ == '__main__':

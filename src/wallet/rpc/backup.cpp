@@ -77,7 +77,12 @@ static bool GetWalletAddressesForKey(const LegacyScriptPubKeyMan* spk_man, const
         }
     }
     if (!fLabelFound) {
-        strAddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), wallet.m_default_address_type));
+        // BECH32M (Taproot) requires x-only pubkeys and cannot be derived from a legacy key via GetDestinationForKey
+        OutputType addr_type = wallet.m_default_address_type;
+        if (addr_type == OutputType::BECH32M || addr_type == OutputType::UNKNOWN) {
+            addr_type = OutputType::BECH32;
+        }
+        strAddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), addr_type));
     }
     return fLabelFound;
 }

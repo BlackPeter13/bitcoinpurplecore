@@ -37,7 +37,7 @@ class ScanblocksTest(BitcoinPurpleTestFramework):
         # send 1.0, mempool only
         # childkey 5 of `parent_key`
         wallet.send_to(from_node=node,
-                       scriptPubKey=address_to_scriptpubkey("mkS4HXoTYWRTescLGaUTGbtTTYX5EjJyEE"),
+                       scriptPubKey=address_to_scriptpubkey("Pcqt8ZQcVawGg2wZvW9vbhvBqoMC9LUhuc"),
                        amount=1 * COIN)
 
         # mine a block and assure that the mined blockhash is in the filterresult

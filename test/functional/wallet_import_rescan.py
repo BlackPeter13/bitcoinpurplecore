@@ -64,7 +64,7 @@ class Variant(collections.namedtuple("Variant", "call data address_type rescan p
                 "scriptPubKey": {
                     "address": self.address["address"]
                 } if self.call == Call.multiaddress else self.address["scriptPubKey"],
-                "timestamp": timestamp + TIMESTAMP_WINDOW + (1 if self.rescan == Rescan.late_timestamp else 0),
+                "timestamp": timestamp + TIMESTAMP_WINDOW + (TIMESTAMP_WINDOW if self.rescan == Rescan.late_timestamp else 0),
                 "pubkeys": [self.address["pubkey"]] if self.data == Data.pub else [],
                 "keys": [self.key] if self.data == Data.priv else [],
                 "label": self.label,
@@ -142,7 +142,7 @@ AMOUNT_DUST = 0.00000546
 
 
 def get_rand_amount():
-    r = random.uniform(AMOUNT_DUST, 1)
+    r = random.uniform(AMOUNT_DUST, 0.05)
     return Decimal(str(round(r, 8)))
 
 

@@ -7,6 +7,7 @@
 
 import concurrent.futures
 import time
+from decimal import Decimal
 
 from test_framework.authproxy import JSONRPCException
 from test_framework.blocktools import COINBASE_MATURITY
@@ -54,12 +55,12 @@ class TransactionTimeRescanTest(BitcoinPurpleTestFramework):
         # prepare miner wallet
         minernode.createwallet(wallet_name='default')
         miner_wallet = minernode.get_wallet_rpc('default')
-        m1 = miner_wallet.getnewaddress()
+        m1 = miner_wallet.getnewaddress('', 'bech32')
 
         # prepare the user wallet with 3 watch only addresses
-        wo1 = usernode.getnewaddress()
-        wo2 = usernode.getnewaddress()
-        wo3 = usernode.getnewaddress()
+        wo1 = usernode.getnewaddress('', 'bech32')
+        wo2 = usernode.getnewaddress('', 'bech32')
+        wo3 = usernode.getnewaddress('', 'bech32')
 
         usernode.createwallet(wallet_name='wo', disable_private_keys=True)
         wo_wallet = usernode.get_wallet_rpc('wo')
@@ -81,9 +82,9 @@ class TransactionTimeRescanTest(BitcoinPurpleTestFramework):
         # synchronize nodes and time
         self.sync_all()
         set_node_times(self.nodes, cur_time + ten_days)
-        # send 10 btcp to user's first watch-only address
-        self.log.info('Send 10 btcp to user')
-        miner_wallet.sendtoaddress(wo1, 10)
+        # send 0.4 BTCP to user's first watch-only address
+        self.log.info('Send 0.4 BTCP to user')
+        miner_wallet.sendtoaddress(wo1, Decimal('0.4'))
 
         # generate blocks and check blockcount
         self.generatetoaddress(minernode, COINBASE_MATURITY, m1)
@@ -92,9 +93,9 @@ class TransactionTimeRescanTest(BitcoinPurpleTestFramework):
         # synchronize nodes and time
         self.sync_all()
         set_node_times(self.nodes, cur_time + ten_days + ten_days)
-        # send 5 btcp to our second watch-only address
-        self.log.info('Send 5 btcp to user')
-        miner_wallet.sendtoaddress(wo2, 5)
+        # send 0.3 BTCP to our second watch-only address
+        self.log.info('Send 0.3 BTCP to user')
+        miner_wallet.sendtoaddress(wo2, Decimal('0.3'))
 
         # generate blocks and check blockcount
         self.generatetoaddress(minernode, COINBASE_MATURITY, m1)
@@ -103,16 +104,16 @@ class TransactionTimeRescanTest(BitcoinPurpleTestFramework):
         # synchronize nodes and time
         self.sync_all()
         set_node_times(self.nodes, cur_time + ten_days + ten_days + ten_days)
-        # send 1 btcp to our third watch-only address
-        self.log.info('Send 1 btcp to user')
-        miner_wallet.sendtoaddress(wo3, 1)
+        # send 0.1 BTCP to our third watch-only address
+        self.log.info('Send 0.1 BTCP to user')
+        miner_wallet.sendtoaddress(wo3, Decimal('0.1'))
 
         # generate more blocks and check blockcount
         self.generatetoaddress(minernode, COINBASE_MATURITY, m1)
         assert_equal(minernode.getblockcount(), initial_mine + 500)
 
         self.log.info('Check user\'s final balance and transaction count')
-        assert_equal(wo_wallet.getbalance(), 16)
+        assert_equal(wo_wallet.getbalance(), Decimal('0.8'))
         assert_equal(len(wo_wallet.listtransactions()), 3)
 
         self.log.info('Check transaction times')
@@ -155,7 +156,7 @@ class TransactionTimeRescanTest(BitcoinPurpleTestFramework):
         restorewo_wallet.rescanblockchain()
 
         self.log.info('Check user\'s final balance and transaction count after restoration')
-        assert_equal(restorewo_wallet.getbalance(), 16)
+        assert_equal(restorewo_wallet.getbalance(), Decimal('0.8'))
         assert_equal(len(restorewo_wallet.listtransactions()), 3)
 
         self.log.info('Check transaction times after restoration')
@@ -190,19 +191,20 @@ class TransactionTimeRescanTest(BitcoinPurpleTestFramework):
             temp_wallet.sethdseed(seed=hd_seed)
 
             for i in range(399):
-                temp_wallet.getnewaddress()
+                temp_wallet.getnewaddress('', 'bech32')
 
-            self.generatetoaddress(usernode, COINBASE_MATURITY + 1, temp_wallet.getnewaddress())
-            self.generatetoaddress(usernode, COINBASE_MATURITY + 1, temp_wallet.getnewaddress())
+            self.generatetoaddress(usernode, COINBASE_MATURITY + 1, temp_wallet.getnewaddress('', 'bech32'))
+            self.generatetoaddress(usernode, COINBASE_MATURITY + 1, temp_wallet.getnewaddress('', 'bech32'))
 
             minernode.createwallet("encrypted_wallet", blank=True, passphrase="passphrase", descriptors=False)
             encrypted_wallet = minernode.get_wallet_rpc("encrypted_wallet")
 
             encrypted_wallet.walletpassphrase("passphrase", 99999)
             encrypted_wallet.sethdseed(seed=hd_seed)
+            genesis_hash = minernode.getblockhash(0)
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as thread:
-                with minernode.assert_debug_log(expected_msgs=["Rescan started from block 0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206... (slow variant inspecting all blocks)"], timeout=5):
+                with minernode.assert_debug_log(expected_msgs=[f"Rescan started from block {genesis_hash}... (slow variant inspecting all blocks)"], timeout=5):
                     rescanning = thread.submit(encrypted_wallet.rescanblockchain)
 
                 # set the passphrase timeout to 1 to test that the wallet remains unlocked during the rescan

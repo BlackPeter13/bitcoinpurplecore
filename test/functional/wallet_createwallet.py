@@ -41,7 +41,7 @@ class CreateWalletTest(BitcoinPurpleTestFramework):
 
         self.nodes[0].createwallet(wallet_name='w0')
         w0 = node.get_wallet_rpc('w0')
-        address1 = w0.getnewaddress()
+        address1 = w0.getnewaddress('', 'bech32')
 
         self.log.info("Test disableprivatekeys creation.")
         self.nodes[0].createwallet(wallet_name='w1', disable_private_keys=True)
@@ -98,8 +98,8 @@ class CreateWalletTest(BitcoinPurpleTestFramework):
         else:
             w3.sethdseed()
         assert_equal(w3.getwalletinfo()['keypoolsize'], 1)
-        w3.getnewaddress()
-        w3.getrawchangeaddress()
+        w3.getnewaddress('', 'bech32')
+        w3.getrawchangeaddress('bech32')
 
         self.log.info("Test blank creation with privkeys enabled and then encryption")
         self.nodes[0].createwallet(wallet_name='w4', disable_private_keys=False, blank=True)
@@ -127,8 +127,8 @@ class CreateWalletTest(BitcoinPurpleTestFramework):
             }])
         else:
             w4.sethdseed()
-        w4.getnewaddress()
-        w4.getrawchangeaddress()
+        w4.getnewaddress('', 'bech32')
+        w4.getrawchangeaddress('bech32')
 
         self.log.info("Test blank creation with privkeys disabled and then encryption")
         self.nodes[0].createwallet(wallet_name='w5', disable_private_keys=True, blank=True)

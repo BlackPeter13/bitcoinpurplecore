@@ -53,8 +53,8 @@ class AddrReceiver(P2PInterface):
                 # relay_tests checks the content of the addr messages match
                 # expectations based on the message creation in setup_addr_msg
                 assert_equal(addr.nServices, 9)
-                if not 13496 <= addr.port < 8343:
-                    raise AssertionError("Invalid addr.port of {} (13496-8342 expected)".format(addr.port))
+                if not 13496 <= addr.port < 13506:
+                    raise AssertionError("Invalid addr.port of {} (13496-13505 expected)".format(addr.port))
                 assert addr.ip.startswith('123.123.')
 
     def on_getaddr(self, message):
